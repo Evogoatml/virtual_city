@@ -1,0 +1,466 @@
+[
+  {
+    "pattern_name": "debug_and_fix",
+    "description": "Reproduce, isolate, root-cause, fix, and verify a software bug",
+    "trigger_keywords": ["fix", "bug", "error", "broken", "crash", "exception", "failing", "doesn't work"],
+    "domain": "coding",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Reproduce the error in a minimal isolated environment and capture the full error message and stack trace",
+        "agent": "DebugMaster",
+        "expected_output": "Confirmed reproduction steps and full error context"
+      },
+      {
+        "step": 2,
+        "description": "Identify the root cause by tracing execution flow to the earliest point of failure",
+        "agent": "DebugMaster",
+        "expected_output": "Root cause statement: file, line, and reason"
+      },
+      {
+        "step": 3,
+        "description": "Implement the fix with the minimal change required to resolve the root cause",
+        "agent": "CodeArchitect",
+        "expected_output": "Code fix with explanation of changes"
+      },
+      {
+        "step": 4,
+        "description": "Write or update tests that would catch this bug in future if it regresses",
+        "agent": "CodeArchitect",
+        "expected_output": "New or updated test cases"
+      },
+      {
+        "step": 5,
+        "description": "Verify the fix resolves the issue and run the full test suite to check for regressions",
+        "agent": "DebugMaster",
+        "expected_output": "Confirmation that tests pass and bug is resolved"
+      }
+    ],
+    "success_criteria": "Bug is fixed, reproduction steps no longer reproduce the error, tests pass",
+    "estimated_complexity": "medium"
+  },
+  {
+    "pattern_name": "new_feature_implementation",
+    "description": "Design, implement, test, and document a new software feature",
+    "trigger_keywords": ["implement", "build", "create", "add feature", "new functionality", "write code for"],
+    "domain": "coding",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Define the feature requirements and acceptance criteria in concrete, testable terms",
+        "agent": "CodeArchitect",
+        "expected_output": "Feature spec with user story, inputs, outputs, and edge cases"
+      },
+      {
+        "step": 2,
+        "description": "Design the technical approach: data structures, API contracts, and integration points",
+        "agent": "CodeArchitect",
+        "expected_output": "Technical design with key decisions explained"
+      },
+      {
+        "step": 3,
+        "description": "Implement the feature following the agreed design, with inline comments where logic is non-obvious",
+        "agent": "CodeArchitect",
+        "expected_output": "Working implementation"
+      },
+      {
+        "step": 4,
+        "description": "Write unit and integration tests covering the happy path, edge cases, and error paths",
+        "agent": "CodeArchitect",
+        "expected_output": "Test suite with >80% coverage on the new code"
+      },
+      {
+        "step": 5,
+        "description": "Review the implementation for security vulnerabilities and performance issues",
+        "agent": "SecurityAuditor",
+        "expected_output": "Security and performance review with any issues flagged"
+      }
+    ],
+    "success_criteria": "Feature implemented, tested, and passes security review",
+    "estimated_complexity": "high"
+  },
+  {
+    "pattern_name": "security_audit",
+    "description": "Comprehensive security review of a codebase or component",
+    "trigger_keywords": ["security audit", "vulnerability scan", "penetration test", "security review", "check for vulnerabilities"],
+    "domain": "coding",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Scan all input handling for injection vulnerabilities: SQL, command, LDAP, XSS, XXE",
+        "agent": "SecurityAuditor",
+        "expected_output": "Injection vulnerability report with file:line references"
+      },
+      {
+        "step": 2,
+        "description": "Review authentication and authorisation logic for bypass, privilege escalation, and session issues",
+        "agent": "SecurityAuditor",
+        "expected_output": "Auth vulnerability report"
+      },
+      {
+        "step": 3,
+        "description": "Scan for hardcoded secrets, insecure defaults, and misconfigured dependencies",
+        "agent": "SecurityAuditor",
+        "expected_output": "Secrets and configuration issues list"
+      },
+      {
+        "step": 4,
+        "description": "Check cryptographic implementations: weak algorithms, bad key management, insecure RNG",
+        "agent": "SecurityAuditor",
+        "expected_output": "Cryptography issues with severity ratings"
+      },
+      {
+        "step": 5,
+        "description": "Prioritise findings by CVSS severity and provide remediation recommendations for each",
+        "agent": "SecurityAuditor",
+        "expected_output": "Prioritised findings report with fix recommendations"
+      }
+    ],
+    "success_criteria": "All critical and high findings have remediation plans; medium+ issues documented",
+    "estimated_complexity": "high"
+  },
+  {
+    "pattern_name": "data_investigation",
+    "description": "Full exploratory investigation of an unfamiliar dataset",
+    "trigger_keywords": ["explore this data", "analyse this dataset", "EDA", "investigate this data", "what does this data show"],
+    "domain": "analysis",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Load and inspect the dataset: shape, column types, sample rows, null counts, and basic statistics",
+        "agent": "DataAnalyzer",
+        "expected_output": "Data quality report: completeness, types, ranges, sample"
+      },
+      {
+        "step": 2,
+        "description": "Clean the data: handle nulls, fix data types, remove duplicates, and flag anomalies",
+        "agent": "DataAnalyzer",
+        "expected_output": "Cleaned dataset with data quality decisions documented"
+      },
+      {
+        "step": 3,
+        "description": "Univariate analysis: distribution of each variable with histograms and summary statistics",
+        "agent": "DataAnalyzer",
+        "expected_output": "Per-variable distribution summary and visualisations"
+      },
+      {
+        "step": 4,
+        "description": "Bivariate analysis: correlations between variables, group comparisons, and cross-tabulations",
+        "agent": "PatternFinder",
+        "expected_output": "Correlation matrix and key bivariate relationships"
+      },
+      {
+        "step": 5,
+        "description": "Detect anomalies and outliers; flag values that deviate significantly from expected distributions",
+        "agent": "AnomalyDetector",
+        "expected_output": "Anomaly report with flagged records and justification"
+      },
+      {
+        "step": 6,
+        "description": "Synthesise findings into a written insight narrative linking patterns to business implications",
+        "agent": "DataAnalyzer",
+        "expected_output": "Insight narrative with 5-10 key findings"
+      }
+    ],
+    "success_criteria": "Dataset fully understood, key patterns documented, anomalies flagged",
+    "estimated_complexity": "medium"
+  },
+  {
+    "pattern_name": "incident_root_cause_analysis",
+    "description": "Systematic investigation of a production incident or system failure",
+    "trigger_keywords": ["what caused this incident", "why did the system fail", "production outage", "post-mortem", "root cause analysis"],
+    "domain": "analysis",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Establish the incident timeline: when did it start, when was it detected, when was it resolved, and what was the impact",
+        "agent": "RootCauseFinder",
+        "expected_output": "Incident timeline with timestamps and impact metrics"
+      },
+      {
+        "step": 2,
+        "description": "Gather all relevant data: logs, metrics, traces, alerts, and change history from the incident window",
+        "agent": "DataGatherer",
+        "expected_output": "Evidence package with sources and timestamps"
+      },
+      {
+        "step": 3,
+        "description": "Identify contributing factors by analysing changes, anomalies, and error patterns in the gathered data",
+        "agent": "RootCauseFinder",
+        "expected_output": "List of contributing factors with supporting evidence"
+      },
+      {
+        "step": 4,
+        "description": "Apply 5-Why analysis to identify the root cause (not just symptoms) behind the top contributing factor",
+        "agent": "RootCauseFinder",
+        "expected_output": "Root cause statement with 5-Why chain"
+      },
+      {
+        "step": 5,
+        "description": "Develop action items: immediate fix, short-term mitigation, and long-term systemic prevention",
+        "agent": "RootCauseFinder",
+        "expected_output": "Action item list with owners and due dates"
+      }
+    ],
+    "success_criteria": "Root cause identified with evidence, action items assigned, post-mortem written",
+    "estimated_complexity": "medium"
+  },
+  {
+    "pattern_name": "market_analysis",
+    "description": "Comprehensive financial market analysis combining technical, macro, and on-chain signals",
+    "trigger_keywords": ["analyse the market", "market analysis", "what is the market doing", "trading opportunity", "investment thesis"],
+    "domain": "trading",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Determine the current macro regime: risk-on/risk-off, rate environment, volatility level",
+        "agent": "RegimeSensor",
+        "expected_output": "Current market regime classification with supporting signals"
+      },
+      {
+        "step": 2,
+        "description": "Analyse price momentum across relevant timeframes (1M, 3M, 6M, 12M) and compare to benchmark",
+        "agent": "MomentumHunter",
+        "expected_output": "Momentum ranking and trend direction with technical indicators"
+      },
+      {
+        "step": 3,
+        "description": "Review on-chain or fundamental metrics to assess underlying demand and adoption (for crypto) or earnings (for equities)",
+        "agent": "OnChainSentry",
+        "expected_output": "Fundamental/on-chain health assessment"
+      },
+      {
+        "step": 4,
+        "description": "Size risk: define maximum position size, stop-loss level, and expected return-to-risk ratio",
+        "agent": "RiskGuardian",
+        "expected_output": "Position sizing recommendation with R:R ratio"
+      },
+      {
+        "step": 5,
+        "description": "Synthesise all signals into a clear investment thesis with entry, target, and invalidation levels",
+        "agent": "RegimeSensor",
+        "expected_output": "Trade thesis: direction, entry zone, target, stop, time horizon"
+      }
+    ],
+    "success_criteria": "Clear trade thesis with defined risk parameters",
+    "estimated_complexity": "high"
+  },
+  {
+    "pattern_name": "research_report",
+    "description": "Gather, validate, synthesise, and cite information into a structured research report",
+    "trigger_keywords": ["research report on", "write a report about", "comprehensive overview of", "deep dive into", "study this topic"],
+    "domain": "research",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Define the research scope and key questions that the report must answer",
+        "agent": "SynthesisEngine",
+        "expected_output": "Research scope document with 5-10 key questions"
+      },
+      {
+        "step": 2,
+        "description": "Gather information from academic, news, and primary sources across all key questions",
+        "agent": "DataGatherer",
+        "expected_output": "Source collection: 10-20 relevant sources with summaries"
+      },
+      {
+        "step": 3,
+        "description": "Validate the top sources for credibility, currency, and potential bias",
+        "agent": "SourceValidator",
+        "expected_output": "Credibility rating for each source, with unreliable ones flagged"
+      },
+      {
+        "step": 4,
+        "description": "Identify key patterns, trends, and points of consensus or disagreement across the validated sources",
+        "agent": "PatternFinder",
+        "expected_output": "Pattern summary: consensus areas, debates, and gaps"
+      },
+      {
+        "step": 5,
+        "description": "Write the structured report: executive summary, findings per question, limitations, and recommendations",
+        "agent": "SynthesisEngine",
+        "expected_output": "Full research report in structured format"
+      },
+      {
+        "step": 6,
+        "description": "Format citations and verify all factual claims in the report trace to a validated source",
+        "agent": "CitationTracker",
+        "expected_output": "Formatted bibliography and citation verification"
+      }
+    ],
+    "success_criteria": "Report covers all key questions with sourced, validated findings",
+    "estimated_complexity": "high"
+  },
+  {
+    "pattern_name": "project_kickoff",
+    "description": "Define, plan, and resource a new project from scratch",
+    "trigger_keywords": ["start a project", "plan this project", "project kickoff", "new project", "how do I start", "project plan"],
+    "domain": "planning",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Define the project goal in SMART terms and establish the definition of done for the overall deliverable",
+        "agent": "GoalDecomposer",
+        "expected_output": "SMART goal statement and project definition of done"
+      },
+      {
+        "step": 2,
+        "description": "Decompose the goal into epics, stories, and tasks with clear ownership and dependencies",
+        "agent": "GoalDecomposer",
+        "expected_output": "Work breakdown structure (WBS)"
+      },
+      {
+        "step": 3,
+        "description": "Identify and score all project risks across technical, resource, timeline, and external categories",
+        "agent": "RiskMapper",
+        "expected_output": "Risk register with probability, impact, and mitigation plans"
+      },
+      {
+        "step": 4,
+        "description": "Assign tasks to team members based on skills and availability; identify gaps",
+        "agent": "ResourceAllocator",
+        "expected_output": "RACI matrix and resource allocation plan"
+      },
+      {
+        "step": 5,
+        "description": "Build the project timeline with milestones, critical path, and external dependency dates",
+        "agent": "TimelineBuilder",
+        "expected_output": "Gantt chart and milestone schedule"
+      }
+    ],
+    "success_criteria": "Project has defined scope, WBS, risk register, resource plan, and timeline",
+    "estimated_complexity": "high"
+  },
+  {
+    "pattern_name": "content_creation",
+    "description": "Ideate, draft, adapt, and polish written content from scratch",
+    "trigger_keywords": ["write a blog post", "create content", "write an article", "produce copy", "draft this", "write about"],
+    "domain": "creative",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Clarify the target audience, tone, key messages, and desired length for the content",
+        "agent": "StyleAdaptor",
+        "expected_output": "Content brief: audience, tone, key messages, format, length"
+      },
+      {
+        "step": 2,
+        "description": "Generate 5-10 angle ideas and select the most compelling approach",
+        "agent": "IdeaGenerator",
+        "expected_output": "Angle options with rationale; top choice selected"
+      },
+      {
+        "step": 3,
+        "description": "Research any facts, statistics, or examples needed to support the chosen angle",
+        "agent": "DataGatherer",
+        "expected_output": "Supporting facts and examples with sources"
+      },
+      {
+        "step": 4,
+        "description": "Write the first draft using the chosen angle and the content brief as guide",
+        "agent": "StoryWeaver",
+        "expected_output": "Complete first draft"
+      },
+      {
+        "step": 5,
+        "description": "Adapt the draft to match the target audience's reading level and the brand's tone of voice",
+        "agent": "StyleAdaptor",
+        "expected_output": "Tone-adapted draft"
+      },
+      {
+        "step": 6,
+        "description": "Polish the final draft: fix grammar, tighten structure, eliminate filler, and verify all facts",
+        "agent": "QualityPolisher",
+        "expected_output": "Final polished content ready to publish"
+      }
+    ],
+    "success_criteria": "Content matches brief, is factually accurate, and is ready to publish",
+    "estimated_complexity": "medium"
+  },
+  {
+    "pattern_name": "performance_investigation",
+    "description": "Profile, identify bottlenecks, and optimise a slow system or piece of code",
+    "trigger_keywords": ["too slow", "performance issues", "optimise this", "latency is high", "throughput is low", "takes too long"],
+    "domain": "coding",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Measure baseline performance with profiling tools to get quantitative numbers before any changes",
+        "agent": "PerformanceOptimizer",
+        "expected_output": "Baseline performance report: p50/p95/p99 latency, throughput, resource usage"
+      },
+      {
+        "step": 2,
+        "description": "Identify the top 3 bottlenecks from the profiling data (hotspots consuming >80% of time)",
+        "agent": "PerformanceOptimizer",
+        "expected_output": "Bottleneck ranking with evidence from profiler output"
+      },
+      {
+        "step": 3,
+        "description": "Design optimisation approach for each bottleneck (algorithmic, caching, async, vectorisation, etc.)",
+        "agent": "PerformanceOptimizer",
+        "expected_output": "Optimisation plan per bottleneck with expected gain estimate"
+      },
+      {
+        "step": 4,
+        "description": "Implement optimisations one at a time, measuring improvement after each change",
+        "agent": "PerformanceOptimizer",
+        "expected_output": "Implemented optimisations with before/after measurements"
+      },
+      {
+        "step": 5,
+        "description": "Verify that optimisations do not introduce correctness issues by running the full test suite",
+        "agent": "DebugMaster",
+        "expected_output": "Test results confirming correctness preserved"
+      }
+    ],
+    "success_criteria": "Performance target achieved, correctness verified, changes documented",
+    "estimated_complexity": "medium"
+  },
+  {
+    "pattern_name": "predictive_model_build",
+    "description": "Build, evaluate, and deploy a predictive model end-to-end",
+    "trigger_keywords": ["build a model", "train a model", "create a predictor", "forecast this", "classify this data"],
+    "domain": "analysis",
+    "subtasks": [
+      {
+        "step": 1,
+        "description": "Define the prediction target, evaluation metric, and baseline performance (naive predictor)",
+        "agent": "PredictiveModeler",
+        "expected_output": "Problem definition: target, metric, baseline performance"
+      },
+      {
+        "step": 2,
+        "description": "Prepare features: clean data, handle nulls, engineer domain-relevant features, split train/val/test",
+        "agent": "DataAnalyzer",
+        "expected_output": "Cleaned, feature-engineered dataset split into train/val/test"
+      },
+      {
+        "step": 3,
+        "description": "Train candidate models and compare performance on the validation set",
+        "agent": "PredictiveModeler",
+        "expected_output": "Model comparison table with validation metrics"
+      },
+      {
+        "step": 4,
+        "description": "Tune the best model's hyperparameters using cross-validation to prevent overfitting",
+        "agent": "PredictiveModeler",
+        "expected_output": "Tuned model with cross-validation results"
+      },
+      {
+        "step": 5,
+        "description": "Evaluate final model on the held-out test set and report performance with confidence intervals",
+        "agent": "PredictiveModeler",
+        "expected_output": "Final test metrics with confidence intervals and comparison to baseline"
+      },
+      {
+        "step": 6,
+        "description": "Interpret model: feature importance, error analysis, and identify cases where model fails",
+        "agent": "PredictiveModeler",
+        "expected_output": "Model interpretation report with failure mode analysis"
+      }
+    ],
+    "success_criteria": "Model beats baseline on held-out test set, with known failure modes documented",
+    "estimated_complexity": "high"
+  }
+]

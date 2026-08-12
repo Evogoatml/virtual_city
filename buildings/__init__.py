@@ -1,0 +1,1 @@
+"""Buildings package — auto-discovered by city.registry."""

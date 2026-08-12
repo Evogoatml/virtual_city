@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual City</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='city.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Virtual City</h1>
+    <div>
+      <span id="connection-indicator" class="disconnected">connecting…</span>
+    </div>
+  </header>
+
+  <main>
+    <div id="city-grid"></div>
+    <div id="window-container"></div>
+  </main>
+
+  <script src="{{ url_for('static', filename='city.js') }}"></script>
+  <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

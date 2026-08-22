@@ -1,7 +1,7 @@
 # Virtual City
 
 A Flask app where each business function is a building/agent on a city map.
-Agents are rule-based (regex command matching) — no LLM calls. City state
+Agents are rule-based (regex command matching) —  City state
 streams to the browser in real time via Server-Sent Events.
 
 ## Buildings

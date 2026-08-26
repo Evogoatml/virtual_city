@@ -79,8 +79,7 @@ def init_db():
             timestamp TEXT NOT NULL,
             type TEXT NOT NULL,
             message TEXT NOT NULL,
-            data_json TEXT,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            data_json TEXT
         );
 
         CREATE TABLE IF NOT EXISTS meetings (
@@ -94,8 +93,7 @@ def init_db():
             plan_text TEXT NOT NULL DEFAULT '',
             status TEXT NOT NULL DEFAULT 'active',
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            updated_at TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS goals (
@@ -105,8 +103,7 @@ def init_db():
             status TEXT NOT NULL DEFAULT 'active',
             progress REAL NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            updated_at TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS tasks (
@@ -127,9 +124,7 @@ def init_db():
             publisher_name TEXT NOT NULL,
             event_type TEXT NOT NULL DEFAULT '*',
             created_at TEXT NOT NULL,
-            UNIQUE(subscriber_name, publisher_name, event_type),
-            FOREIGN KEY (subscriber_name) REFERENCES agents(name),
-            FOREIGN KEY (publisher_name) REFERENCES agents(name)
+            UNIQUE(subscriber_name, publisher_name, event_type)
         );
 
         CREATE TABLE IF NOT EXISTS agent_config (
@@ -141,7 +136,6 @@ def init_db():
             secret INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY (agent_name) REFERENCES agents(name),
             UNIQUE(agent_name, key)
         );
 
@@ -161,8 +155,7 @@ def init_db():
             ctmsact TEXT NOT NULL,
             content TEXT NOT NULL,
             data_json TEXT,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            created_at TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS chronolog (
@@ -173,8 +166,7 @@ def init_db():
             nodes INTEGER NOT NULL DEFAULT 0,
             step_index INTEGER NOT NULL DEFAULT 0,
             focus TEXT,
-            summary TEXT,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            summary TEXT
         );
 
         CREATE TABLE IF NOT EXISTS cog_schedule (
@@ -185,8 +177,7 @@ def init_db():
             payload TEXT,
             status TEXT NOT NULL DEFAULT 'pending',
             created_at TEXT NOT NULL,
-            done_at TEXT,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            done_at TEXT
         );
 
         CREATE TABLE IF NOT EXISTS agent_runs (
@@ -197,8 +188,7 @@ def init_db():
             skill TEXT NOT NULL,
             status TEXT NOT NULL,
             result_json TEXT,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (agent_name) REFERENCES agents(name)
+            created_at TEXT NOT NULL
         );
 
         CREATE INDEX IF NOT EXISTS idx_runs_agent ON agent_runs(agent_name);

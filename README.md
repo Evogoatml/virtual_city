@@ -17,11 +17,14 @@ streams to the browser in real time via Server-Sent Events.
 ## Run
 
 ```bash
+cp .env.example .env   # optional keys: VENICE_API_KEY, CITY_API_KEY, video providers
 pip install -r requirements.txt
 python app.py
 ```
 
-Open http://localhost:5000
+Open http://localhost:5000 (binds `127.0.0.1` by default; set `CITY_HOST=0.0.0.0` only with `CITY_API_KEY` set).
+
+When `CITY_API_KEY` is set, mutating POSTs require header `X-City-Api-Key`.
 
 ## Adding a new agent/building
 

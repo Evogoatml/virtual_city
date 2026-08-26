@@ -28,6 +28,38 @@ class ViralIntelligence:
             self._save_insight(insight)
         return {"optimized_strategy": optimized, "patterns": patterns, "insights": insights}
 
+    async def get_content_recommendations(self, niche: str = "lifestyle", platform: str = "instagram") -> List[Dict]:
+        """Heuristic recommendations from stored viral/video data (no external API required)."""
+        strategy = {"niche": niche, "target_audience": "general", "content_plan": {"themes": [niche]}}
+        result = await self.analyze_and_optimize(strategy, platforms=[platform])
+        patterns = result.get("patterns") or {}
+        recs = []
+        ct = patterns.get("content_types") or {}
+        if ct.get("recommendation"):
+            recs.append({"type": "content_type", "platform": platform, "niche": niche, "text": ct["recommendation"]})
+        timing = patterns.get("optimal_timing") or {}
+        if timing.get("recommendation"):
+            recs.append({"type": "timing", "platform": platform, "niche": niche, "text": timing["recommendation"]})
+        tags = patterns.get("hashtag_patterns") or {}
+        if tags.get("recommendation"):
+            recs.append({"type": "hashtags", "platform": platform, "niche": niche, "text": tags["recommendation"]})
+        for insight in (result.get("insights") or [])[:5]:
+            if isinstance(insight, dict):
+                recs.append({
+                    "type": "insight",
+                    "platform": platform,
+                    "niche": niche,
+                    "text": insight.get("recommendation") or insight.get("pattern") or str(insight),
+                })
+        if not recs:
+            recs.append({
+                "type": "default",
+                "platform": platform,
+                "niche": niche,
+                "text": f"Seed viral_content / content_video_generations data, then re-run recommendations for {niche} on {platform}.",
+            })
+        return recs
+
     async def _gather_viral_data(self, platforms: List[str]) -> Dict:
         data = {"content": [], "hashtags": [], "stats": {}}
         for platform in platforms:
@@ -99,7 +131,11 @@ class ViralIntelligence:
             hourly[hour]["avg_engagement"] = hourly[hour]["total_engagement"] / c if c else 0
         sorted_hours = sorted(hourly.items(), key=lambda x: x[1].get("avg_engagement", 0), reverse=True)
         top_hours = [f"{h:02d}:00" for h, _ in sorted_hours[:3]]
-        return {"hourly_performance": hourly, "top_posting_times": top_hours, "recommendation": f"Post at {', '.join(top_hours)} for maximum engagement"}
+        if top_hours:
+            rec = f"Post at {', '.join(top_hours)} for maximum engagement"
+        else:
+            rec = "Not enough posted_at data to recommend timing"
+        return {"hourly_performance": hourly, "top_posting_times": top_hours, "recommendation": rec}
 
     def _analyze_hashtag_patterns(self, hashtags: List[Dict]) -> Dict:
         top_usage = sorted(hashtags, key=lambda x: x.get("usage_count", 0), reverse=True)[:10]
@@ -155,7 +191,19 @@ class ViralIntelligence:
     def _analyze_platform_performance(self, stats: Dict) -> Dict:
         if not stats:
             return {"stats": {}, "top_platform": "instagram", "recommendation": "Focus on Instagram"}
-        top = max(stats.items(), key=lambda x: x[1].get("avg_engagement", 0))[0]
+
+        def _score(val):
+            if isinstance(val, dict):
+                return float(val.get("avg_engagement", 0) or 0)
+            if isinstance(val, list) and val:
+                engs = []
+                for row in val:
+                    if isinstance(row, dict):
+                        engs.append(float(row.get("avg_engagement", 0) or 0))
+                return sum(engs) / len(engs) if engs else 0.0
+            return 0.0
+
+        top = max(stats.items(), key=lambda x: _score(x[1]))[0]
         return {"stats": stats, "top_platform": top, "recommendation": f"Focus more content on {top}"}
 
     async def _generate_ai_insights(self, patterns: Dict, current_strategy: Dict) -> List[Dict]:
@@ -179,21 +227,41 @@ CURRENT STRATEGY:
 - Themes: {', '.join(current_strategy.get('content_plan', {}).get('themes', []))}
 
 Return JSON: [{{"type": "...", "pattern": "...", "confidence": 0.9, "recommendation": "..."}}]"""
-            resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "system", "content": "You are a social media strategy expert."}, {"role": "user", "content": prompt}], max_tokens=1000, temperature=0.7)
+            resp = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a social media strategy expert."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=1000,
+                temperature=0.7,
+            )
             try:
-                return json.loads(resp.choices[0].message.content.strip())
+                parsed = json.loads(resp.choices[0].message.content.strip())
+                if isinstance(parsed, list):
+                    return parsed
             except Exception:
-                return self._rule_based_insights(patterns)
+                pass
+            return self._rule_based_insights(patterns)
         except Exception:
             return self._rule_based_insights(patterns)
 
     def _rule_based_insights(self, patterns: Dict) -> List[Dict]:
+        drivers = patterns.get("engagement_drivers") or {}
+        if drivers:
+            top_driver = max(drivers.items(), key=lambda x: x[1].get("impact", 0))[0]
+            driver_rec = f"Include {top_driver.replace('_', ' ')}"
+            driver_pattern = f"Content with '{top_driver}' shows higher engagement"
+        else:
+            top_driver = "call to action"
+            driver_rec = "Include a clear call to action"
+            driver_pattern = "No engagement-driver data yet"
         return [
             {"type": "content_type", "platform": "all", "pattern": f"'{patterns['content_types']['top_type']}' content performs best", "confidence": 0.8, "recommendation": patterns['content_types']['recommendation']},
             {"type": "timing", "platform": "all", "pattern": "Optimal posting times identified", "confidence": 0.75, "recommendation": patterns['optimal_timing']['recommendation']},
             {"type": "hashtags", "platform": "all", "pattern": "High-performing hashtags identified", "confidence": 0.85, "recommendation": patterns['hashtag_patterns']['recommendation']},
             {"type": "caption", "platform": "all", "pattern": f"'{patterns['caption_length']['optimal_length']}' captions drive more engagement", "confidence": 0.7, "recommendation": patterns['caption_length']['recommendation']},
-            {"type": "engagement", "platform": "all", "pattern": f"Content with '{max(patterns['engagement_drivers'].items(), key=lambda x: x[1]['impact'])[0]}' shows higher engagement", "confidence": 0.8, "recommendation": f"Include {max(patterns['engagement_drivers'].items(), key=lambda x: x[1]['impact'])[0].replace('_', ' ')}"},
+            {"type": "engagement", "platform": "all", "pattern": driver_pattern, "confidence": 0.8, "recommendation": driver_rec},
         ]
 
     def _create_optimized_strategy(self, current: Dict, patterns: Dict, insights: List[Dict]) -> Dict:
@@ -250,17 +318,32 @@ class VideoAnalytics:
 
     def get_performance_metrics(self, days: int = 30) -> Dict:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
-        agg = self.conn.execute(
-            "SELECT COUNT(*) as total, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed, SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) as failed, COALESCE(AVG(engagement_rate),0) as avg_eng, COALESCE(AVG(duration_seconds),0) as avg_dur FROM content_video_generations WHERE created_at >= ?",
-            (cutoff,),
-        ).fetchone()
+        try:
+            agg = self.conn.execute(
+                "SELECT COUNT(*) as total, "
+                "SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed, "
+                "SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) as failed, "
+                "COALESCE(AVG(engagement_rate),0) as avg_eng, "
+                "COALESCE(AVG(COALESCE(duration_seconds, duration)),0) as avg_dur "
+                "FROM content_video_generations WHERE created_at >= ?",
+                (cutoff,),
+            ).fetchone()
+        except Exception:
+            agg = self.conn.execute(
+                "SELECT COUNT(*) as total, "
+                "SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed, "
+                "SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) as failed, "
+                "0 as avg_eng, 0 as avg_dur "
+                "FROM content_video_generations WHERE created_at >= ?",
+                (cutoff,),
+            ).fetchone()
         providers = self.conn.execute(
             "SELECT provider, AVG(CASE WHEN status='completed' THEN 1 ELSE 0 END) as success_rate, COALESCE(AVG(cost_usd),0) as avg_cost, COUNT(*) as total, MAX(created_at) as last_used FROM content_video_generations WHERE created_at >= ? GROUP BY provider",
             (cutoff,),
         ).fetchall()
         comp = [{"provider": r["provider"], "success_rate": round(r["success_rate"], 2), "avg_cost": round(r["avg_cost"], 2), "total_videos": r["total"], "last_used": r["last_used"]} for r in providers]
         comp.sort(key=lambda x: x["success_rate"], reverse=True)
-        return {"period_days": days, "total_videos": agg["total"], "completed_videos": agg["completed"], "failed_videos": agg["failed"], "success_rate": round(agg["completed"] / agg["total"] * 100, 1) if agg["total"] else 0, "avg_engagement": round(agg["avg_eng"], 4), "avg_duration": round(agg["avg_dur"], 1), "provider_comparison": comp}
+        return {"period_days": days, "total_videos": agg["total"], "completed_videos": agg["completed"] or 0, "failed_videos": agg["failed"] or 0, "success_rate": round((agg["completed"] or 0) / agg["total"] * 100, 1) if agg["total"] else 0, "avg_engagement": round(agg["avg_eng"] or 0, 4), "avg_duration": round(agg["avg_dur"] or 0, 1), "provider_comparison": comp}
 
     def check_budget_alerts(self, daily_limit: float, monthly_limit: float, current_daily: float, current_monthly: float) -> List[Dict]:
         alerts = []
@@ -308,17 +391,64 @@ class VideoAnalytics:
 
     def get_roi_analysis(self, days: int = 30) -> Dict:
         cutoff = (datetime.now() - timedelta(days=days)).isoformat()
-        agg = self.conn.execute("SELECT COALESCE(SUM(cost_usd),0) as cost, COUNT(*) as total FROM content_video_generations WHERE created_at >= ?", (cutoff,)).fetchone()
-        videos = self.conn.execute("SELECT views, engagement_rate FROM content_video_generations WHERE status='completed' AND created_at >= ?", (cutoff,)).fetchall()
-        total_eng = sum((v["views"] or 0) * (v["engagement_rate"] or 0) for v in videos)
+        agg = self.conn.execute(
+            "SELECT COALESCE(SUM(cost_usd),0) as cost, COUNT(*) as total FROM content_video_generations WHERE created_at >= ?",
+            (cutoff,),
+        ).fetchone()
+        try:
+            videos = self.conn.execute(
+                "SELECT COALESCE(views,0) as views, COALESCE(engagement_rate,0) as engagement_rate "
+                "FROM content_video_generations WHERE status='completed' AND created_at >= ?",
+                (cutoff,),
+            ).fetchall()
+            total_eng = sum((v["views"] or 0) * (v["engagement_rate"] or 0) for v in videos)
+        except Exception:
+            total_eng = 0
         value_per_eng = 0.05
         est_value = total_eng * value_per_eng
         roi = ((est_value - agg["cost"]) / agg["cost"] * 100) if agg["cost"] else 0
-        return {"period_days": days, "total_cost": round(agg["cost"], 2), "total_videos": agg["total"], "total_engagement": int(total_eng), "estimated_value": round(est_value, 2), "roi_percentage": round(roi, 1), "cost_per_engagement": round(agg["cost"] / total_eng, 4) if total_eng else 0}
+        return {
+            "period_days": days,
+            "total_cost": round(agg["cost"], 2),
+            "total_videos": agg["total"],
+            "total_engagement": int(total_eng),
+            "estimated_value": round(est_value, 2),
+            "roi_percentage": round(roi, 1),
+            "cost_per_engagement": round(agg["cost"] / total_eng, 4) if total_eng else 0,
+        }
 
     def get_trending_video_insights(self, limit: int = 10) -> List[Dict]:
-        videos = self.conn.execute("SELECT * FROM content_video_generations WHERE status='completed' ORDER BY views * engagement_rate DESC LIMIT ?", (limit,)).fetchall()
-        return [{"job_id": v["job_id"], "provider": v["provider"], "views": v["views"], "engagement_rate": v["engagement_rate"], "engagement_count": int((v["views"] or 0) * (v["engagement_rate"] or 0)), "cost": v["cost_usd"], "duration": v["duration_seconds"], "created_at": v["created_at"], "prompt_preview": (v["prompt"] or "")[:100]} for v in videos]
+        try:
+            videos = self.conn.execute(
+                "SELECT * FROM content_video_generations WHERE status='completed' "
+                "ORDER BY COALESCE(views,0) * COALESCE(engagement_rate,0) DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        except Exception:
+            videos = self.conn.execute(
+                "SELECT * FROM content_video_generations WHERE status='completed' ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        out = []
+        for v in videos:
+            keys = v.keys()
+            dur = v["duration_seconds"] if "duration_seconds" in keys else None
+            if dur is None and "duration" in keys:
+                dur = v["duration"]
+            views = v["views"] if "views" in keys else 0
+            eng = v["engagement_rate"] if "engagement_rate" in keys else 0
+            out.append({
+                "job_id": v["job_id"],
+                "provider": v["provider"],
+                "views": views or 0,
+                "engagement_rate": eng or 0,
+                "engagement_count": int((views or 0) * (eng or 0)),
+                "cost": v["cost_usd"],
+                "duration": dur,
+                "created_at": v["created_at"],
+                "prompt_preview": (v["prompt"] or "")[:100],
+            })
+        return out
 
 
 class ContentAnalyticsDepartment(BaseAgent):
@@ -333,6 +463,25 @@ class ContentAnalyticsDepartment(BaseAgent):
         self.conn.execute("""CREATE TABLE IF NOT EXISTS viral_stats (id INTEGER PRIMARY KEY AUTOINCREMENT, platform TEXT, date TEXT, total_posts INTEGER, avg_engagement REAL, top_content_type TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
         self.conn.execute("""CREATE TABLE IF NOT EXISTS content_insights (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, platform TEXT, niche TEXT, pattern TEXT, confidence REAL, recommendation TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
         self.conn.execute("""CREATE TABLE IF NOT EXISTS content_video_generations (id INTEGER PRIMARY KEY AUTOINCREMENT, request_id TEXT, job_id TEXT, provider TEXT, prompt TEXT, status TEXT, video_url TEXT, thumbnail_url TEXT, duration_seconds INTEGER, cost_usd REAL, views INTEGER DEFAULT 0, likes INTEGER DEFAULT 0, comments INTEGER DEFAULT 0, shares INTEGER DEFAULT 0, engagement_rate REAL DEFAULT 0, metadata TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, completed_at TEXT)""")
+        self.conn.execute("""CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)""")
+        # Unify columns if automation created the table first (duration / metadata_json only)
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(content_video_generations)").fetchall()}
+        for col, decl in (
+            ("duration_seconds", "INTEGER"),
+            ("duration", "INTEGER"),
+            ("views", "INTEGER DEFAULT 0"),
+            ("likes", "INTEGER DEFAULT 0"),
+            ("comments", "INTEGER DEFAULT 0"),
+            ("shares", "INTEGER DEFAULT 0"),
+            ("engagement_rate", "REAL DEFAULT 0"),
+            ("metadata", "TEXT"),
+            ("metadata_json", "TEXT"),
+        ):
+            if col not in cols:
+                try:
+                    self.conn.execute(f"ALTER TABLE content_video_generations ADD COLUMN {col} {decl}")
+                except Exception:
+                    pass
         self.conn.commit()
 
     def register_rules(self):

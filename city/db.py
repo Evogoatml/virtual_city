@@ -8,33 +8,49 @@ table(s), created lazily by the agent itself on first use.
 import sqlite3
 import json
 import os
+import threading
 from datetime import datetime, timezone
 from flask import g
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "city_state.db")
 
-
-def get_db():
-    """Return a request-scoped SQLite connection (row factory = dict-like)."""
-    if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON")
-        g.db.execute("PRAGMA journal_mode = WAL")
-    return g.db
+# One SQLite connection per thread. Connections are reused for the thread's
+# lifetime and never explicitly closed — this avoids the "operate on a closed
+# database" native crash that happened when scheduler/request threads closed
+# each other's shared connections. Recreated automatically if somehow closed.
+_local = threading.local()
 
 
-def close_db(e=None):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
-
-
-def get_raw_connection():
-    """Standalone connection for use outside a Flask request context (e.g. scheduler jobs)."""
+def _new_conn():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def get_db():
+    """Per-thread SQLite connection (row factory = dict-like)."""
+    return get_raw_connection()
+
+
+def close_db(e=None):
+    # Connections are thread-local and intentionally never closed; no-op.
+    return
+
+
+def get_raw_connection():
+    """Thread-local SQLite connection for scheduler jobs / background threads."""
+    conn = getattr(_local, "conn", None)
+    if conn is None:
+        conn = _new_conn()
+        _local.conn = conn
+    else:
+        try:
+            conn.execute("SELECT 1")
+        except Exception:
+            conn = _new_conn()
+            _local.conn = conn
     return conn
 
 
@@ -111,6 +127,7 @@ def init_db():
             publisher_name TEXT NOT NULL,
             event_type TEXT NOT NULL DEFAULT '*',
             created_at TEXT NOT NULL,
+            UNIQUE(subscriber_name, publisher_name, event_type),
             FOREIGN KEY (subscriber_name) REFERENCES agents(name),
             FOREIGN KEY (publisher_name) REFERENCES agents(name)
         );
@@ -135,6 +152,56 @@ def init_db():
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL DEFAULT ''
         );
+
+        CREATE TABLE IF NOT EXISTS traces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            tag TEXT NOT NULL,
+            type TEXT NOT NULL,
+            ctmsact TEXT NOT NULL,
+            content TEXT NOT NULL,
+            data_json TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (agent_name) REFERENCES agents(name)
+        );
+
+        CREATE TABLE IF NOT EXISTS chronolog (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            depth INTEGER NOT NULL DEFAULT 0,
+            nodes INTEGER NOT NULL DEFAULT 0,
+            step_index INTEGER NOT NULL DEFAULT 0,
+            focus TEXT,
+            summary TEXT,
+            FOREIGN KEY (agent_name) REFERENCES agents(name)
+        );
+
+        CREATE TABLE IF NOT EXISTS cog_schedule (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            due_at TEXT NOT NULL,
+            action_type TEXT NOT NULL,
+            payload TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL,
+            done_at TEXT,
+            FOREIGN KEY (agent_name) REFERENCES agents(name)
+        );
+
+        CREATE TABLE IF NOT EXISTS agent_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            persona TEXT,
+            intent TEXT,
+            skill TEXT NOT NULL,
+            status TEXT NOT NULL,
+            result_json TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (agent_name) REFERENCES agents(name)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_runs_agent ON agent_runs(agent_name);
         """
     )
     conn.commit()
@@ -163,6 +230,105 @@ def set_status(conn, agent_name, status):
         (status, now_iso(), agent_name),
     )
     conn.commit()
+
+
+def log_trace(conn, agent_name, tag, ctype, ctmsact, content, data=None):
+    """Append a causal reasoning step in <tag:type:ctmsact> form.
+
+    tag      – phase: think | act | observe | branch | error
+    type     – category: plan | result | error | split
+    ctmsact  – operator glyph: ♢ next · ⊨ truth · ↺ abandon · ⋔ split · ↑ transcend
+    """
+    conn.execute(
+        "INSERT INTO traces (agent_name, tag, type, ctmsact, content, data_json, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (agent_name, tag, ctype, ctmsact, content, json.dumps(data or {}), now_iso()),
+    )
+    conn.commit()
+
+
+def log_chronolog(conn, agent_name, depth, nodes, step_index, focus, summary):
+    """Append a chronological snapshot of a building's reasoning state."""
+    try:
+        conn.execute(
+            "INSERT INTO chronolog (agent_name, created_at, depth, nodes, step_index, focus, summary) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (agent_name, now_iso(), depth, nodes, step_index, focus, summary),
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+
+def recent_chronolog(conn, agent_name, limit=50):
+    rows = conn.execute(
+        "SELECT created_at, depth, nodes, step_index, focus, summary "
+        "FROM chronolog WHERE agent_name = ? ORDER BY id DESC LIMIT ?",
+        (agent_name, limit),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def schedule_action(conn, agent_name, due_at, action_type, payload):
+    """Queue a deferred autonomous action for this building."""
+    conn.execute(
+        "INSERT INTO cog_schedule (agent_name, due_at, action_type, payload, status, created_at) "
+        "VALUES (?, ?, ?, ?, 'pending', ?)",
+        (agent_name, due_at, action_type, payload, now_iso()),
+    )
+    conn.commit()
+
+
+def due_actions(conn, agent_name):
+    """Return pending actions whose due_at has passed."""
+    now = now_iso()
+    rows = conn.execute(
+        "SELECT * FROM cog_schedule WHERE agent_name = ? AND status = 'pending' AND due_at <= ? "
+        "ORDER BY due_at ASC",
+        (agent_name, now),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def complete_action(conn, action_id):
+    conn.execute(
+        "UPDATE cog_schedule SET status = 'done', done_at = ? WHERE id = ?",
+        (now_iso(), action_id),
+    )
+    conn.commit()
+
+
+def log_run(conn, agent_name, persona, intent, skill, status, result, created_at=None):
+    """Append one executed skill step to the agent run history."""
+    try:
+        conn.execute(
+            "INSERT INTO agent_runs (agent_name, persona, intent, skill, status, result_json, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (agent_name, persona, intent, skill, status,
+             json.dumps(result if isinstance(result, (dict, list)) else {"value": str(result)}),
+             created_at or now_iso()),
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+
+def recent_runs(conn, agent_name=None, limit=30):
+    if agent_name:
+        rows = conn.execute(
+            "SELECT * FROM agent_runs WHERE agent_name = ? ORDER BY id DESC LIMIT ?",
+            (agent_name, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM agent_runs ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def render_trace(row) -> str:
+    """Render a trace row as '<tag:type:ctmsact> content'."""
+    return f"<{row['tag']}:{row['type']}:{row['ctmsact']}> {row['content']}"
 
 
 def upsert_building(conn, name, subject, district, color, x, y, w=90, h=90):

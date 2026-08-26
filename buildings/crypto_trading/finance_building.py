@@ -1,13 +1,8 @@
 """
 Finance Building — Orchestrates Crypto Trading + Market Data departments.
-Departments are internal components, not separate agents.
+Aggregates registry-owned departments (does not re-instantiate them).
 """
 from city.agent import Agent
-from city.db import now_iso
-
-# Import internal departments
-from .crypto_trading import CryptoTradingDepartment
-from .market_data import MarketDataDepartment
 
 
 class FinanceBuildingAgent(Agent):
@@ -15,6 +10,8 @@ class FinanceBuildingAgent(Agent):
     subject = "Finance Building"
     district = "Financial District"
     color = "#ff6d00"
+
+    DEPT_NAMES = ("market_data", "finance_treasury")
 
     def setup_schema(self):
         self.conn.execute("""
@@ -29,11 +26,9 @@ class FinanceBuildingAgent(Agent):
         self.conn.commit()
 
     def _get_departments(self):
-        """Lazy-create departments with current connection."""
-        return {
-            "crypto_trading": CryptoTradingDepartment(self.conn),
-            "market_data": MarketDataDepartment(self.conn),
-        }
+        from city.registry import get_registry
+        registry = get_registry(self.conn)
+        return {name: registry[name] for name in self.DEPT_NAMES if name in registry}
 
     def register_rules(self):
         self.rule(r"^departments$")(self._list_departments)
@@ -41,7 +36,6 @@ class FinanceBuildingAgent(Agent):
         self.rule(r"^building\s+status$")(self._building_status)
         self.rule(r"^aggregate$")(self._aggregate)
         self.rule(r"^status$")(self._status)
-        # Delegate to departments: dept <name> <query>
         self.rule(r"^dept\s+(?P<dept>\w+)\s+(?P<query>.+)$")(self._delegate_to_dept)
 
     def _delegate_to_dept(self, dept: str, query: str):
@@ -63,24 +57,30 @@ class FinanceBuildingAgent(Agent):
         return {"department": dept, "status": dept_agent.report()}
 
     def _building_status(self):
-        agg = {"pnl": 0, "positions": 0, "exchanges": 0, "pairs": 0, "updates": 0}
-        for name, agent in self._get_departments().items():
+        agg = {"pnl": 0.0, "positions": 0, "exchanges": 0, "pairs": 0, "updates": 0}
+        for agent in self._get_departments().values():
             try:
                 r = agent.report()
-                for k in ["realized_pnl_usd", "open_positions", "active_exchanges", "monitored_pairs", "total_updates"]:
-                    if k in r:
-                        agg[k.replace("realized_pnl_usd", "pnl").replace("open_positions", "positions")
-                            .replace("active_exchanges", "exchanges").replace("monitored_pairs", "pairs")
-                            .replace("total_updates", "updates")] += r[k]
             except Exception:
-                pass
+                continue
+            for key, dest in (
+                ("realized_pnl_usd", "pnl"),
+                ("pnl", "pnl"),
+                ("open_positions", "positions"),
+                ("active_exchanges", "exchanges"),
+                ("monitored_pairs", "pairs"),
+                ("total_updates", "updates"),
+            ):
+                if key in r and isinstance(r[key], (int, float)):
+                    agg[dest] += r[key]
         return {
             "building": self.name,
-            "total_realized_pnl_usd": agg["pnl"],
-            "total_open_positions": agg["positions"],
-            "exchanges_active": agg["exchanges"],
-            "pairs_monitored": agg["pairs"],
-            "price_updates": agg["updates"],
+            "mode": "paper",
+            "total_realized_pnl_usd": round(agg["pnl"], 2),
+            "total_open_positions": int(agg["positions"]),
+            "exchanges_active": int(agg["exchanges"]),
+            "pairs_monitored": int(agg["pairs"]),
+            "price_updates": int(agg["updates"]),
         }
 
     def _aggregate(self):
@@ -88,7 +88,10 @@ class FinanceBuildingAgent(Agent):
 
     def work(self):
         status = self._building_status()
-        self.log("tick", f"pnl=${status['total_realized_pnl_usd']}, positions={status['total_open_positions']}")
+        self.log(
+            "tick",
+            f"pnl=${status['total_realized_pnl_usd']}, positions={status['total_open_positions']}",
+        )
 
     def report(self):
         return self._building_status()

@@ -72,6 +72,40 @@ class SocialAffiliatesDepartment(Department):
     def _status(self):
         return self.report()
 
+    # ----------------------------------------------------- runtime skills
+    def register_skills(self):
+        self.add_skill(
+            "summarize", "Report affiliate performance (clicks, conversions, revenue).",
+            fn=lambda agent, **kw: agent._stats(), risk="read", cost_kind="local",
+            default=True,
+        )
+        self.add_skill(
+            "create_campaign", "Open an affiliate campaign for a platform + offer.",
+            fn=lambda agent, **kw: agent._new_campaign(
+                kw.get("platform", "social"), kw.get("offer", "default")),
+            risk="write", cost_kind="local", event="affiliate.campaign_created",
+        )
+        self.add_skill(
+            "log_click", "Log a click of interest on an offer.",
+            fn=lambda agent, **kw: agent._click(kw.get("offer", "default")),
+            risk="write", cost_kind="local",
+        )
+        self.add_skill(
+            "log_conversion", "Log a conversion (sale) and its revenue for an offer.",
+            fn=lambda agent, **kw: agent._convert(
+                kw.get("offer", "default"), float(kw.get("revenue", 0) or 0)),
+            risk="write", cost_kind="local", event="affiliate.conversion",
+        )
+
+    def handle_event(self, event_type, message="", data=None):
+        """React to events from other buildings (real interaction)."""
+        data = data or {}
+        if event_type == "content.published":
+            offer = data.get("offer") or data.get("topic") or "default"
+            self._new_campaign("social", offer)
+            return {"campaign": "synced from published content", "offer": offer}
+        return None
+
     def work(self):
         row = self.conn.execute(
             "SELECT COALESCE(SUM(clicks),0) AS clicks, COALESCE(SUM(revenue),0) AS rev FROM affiliate_campaigns"
@@ -91,4 +125,5 @@ class SocialAffiliatesDepartment(Department):
             "conversions": row["conv"],
             "conversion_rate": round(conv_rate, 2),
             "revenue": round(row["rev"], 2),
+            "revenue_usd": round(row["rev"], 2),
         }

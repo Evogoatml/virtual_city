@@ -335,6 +335,21 @@ class ContentAutomationDepartment(BaseAgent):
             CREATE INDEX IF NOT EXISTS idx_queue_status ON content_video_queue(status);
             CREATE INDEX IF NOT EXISTS idx_gen_request ON content_video_generations(request_id);
         """)
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(content_video_generations)").fetchall()}
+        for col, decl in (
+            ("duration_seconds", "INTEGER"),
+            ("views", "INTEGER DEFAULT 0"),
+            ("likes", "INTEGER DEFAULT 0"),
+            ("comments", "INTEGER DEFAULT 0"),
+            ("shares", "INTEGER DEFAULT 0"),
+            ("engagement_rate", "REAL DEFAULT 0"),
+            ("metadata", "TEXT"),
+        ):
+            if col not in cols:
+                try:
+                    self.conn.execute(f"ALTER TABLE content_video_generations ADD COLUMN {col} {decl}")
+                except Exception:
+                    pass
         self.conn.commit()
 
     def register_rules(self):
@@ -512,8 +527,26 @@ class ContentAutomationDepartment(BaseAgent):
             (VideoStatus.COMPLETED.value, now_iso(), json.dumps(result), request_id),
         )
         self.conn.execute(
-            "INSERT INTO content_video_generations (request_id, provider, job_id, prompt, video_url, thumbnail_url, duration, cost_usd, status, metadata_json, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (request_id, provider, job_id, self.conn.execute("SELECT prompt FROM content_video_queue WHERE request_id = ?", (request_id,)).fetchone()["prompt"], result.get("video_url"), result.get("thumbnail_url"), result.get("duration"), result.get("cost_usd", 0), VideoStatus.COMPLETED.value, json.dumps(result.get("metadata", {})), self.conn.execute("SELECT created_at FROM content_video_queue WHERE request_id = ?", (request_id,)).fetchone()["created_at"], now_iso()),
+            "INSERT INTO content_video_generations (request_id, provider, job_id, prompt, video_url, thumbnail_url, duration, duration_seconds, cost_usd, status, metadata_json, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                request_id,
+                provider,
+                job_id,
+                self.conn.execute(
+                    "SELECT prompt FROM content_video_queue WHERE request_id = ?", (request_id,)
+                ).fetchone()["prompt"],
+                result.get("video_url"),
+                result.get("thumbnail_url"),
+                result.get("duration"),
+                result.get("duration"),
+                result.get("cost_usd", 0),
+                VideoStatus.COMPLETED.value,
+                json.dumps(result.get("metadata", {})),
+                self.conn.execute(
+                    "SELECT created_at FROM content_video_queue WHERE request_id = ?", (request_id,)
+                ).fetchone()["created_at"],
+                now_iso(),
+            ),
         )
         self.conn.commit()
         self.log("generation", f"Video completed: {request_id}", {"request_id": request_id, "video_url": result.get("video_url")})
@@ -547,7 +580,32 @@ class ContentAutomationDepartment(BaseAgent):
         self.conn.commit()
 
     def _get_api_key(self, provider: str) -> Optional[str]:
-        return None  # TODO: wire to config/secrets
+        import os
+        env_map = {
+            "kling": "KLING_API_KEY",
+            "pika": "PIKA_API_KEY",
+            "runway": "RUNWAY_API_KEY",
+            "heygen": "HEYGEN_API_KEY",
+        }
+        env_name = env_map.get((provider or "").lower())
+        if env_name:
+            val = os.environ.get(env_name, "").strip()
+            if val:
+                return val
+        # Fallback: agent_config table / video_config.json
+        try:
+            from city.orchestrator import AgentConfig
+            cfg = AgentConfig(self.name)
+            for key in (f"{provider}_api_key", f"{provider}_key", env_name or ""):
+                if not key:
+                    continue
+                val = cfg.get(key)
+                if val:
+                    return str(val).strip()
+        except Exception:
+            pass
+        cfg = self._get_provider_config(provider)
+        return (cfg.get("api_key") or cfg.get("key") or None)
 
     def _get_provider_config(self, provider: str) -> Dict:
         config_path = Path(__file__).parent.parent / "config" / "video_config.json"
@@ -575,8 +633,27 @@ class ContentAutomationDepartment(BaseAgent):
 
     def work(self):
         stats = self._stats()["stats"]
-        if stats["queued"] > 0 or stats["processing"] > 0:
-            self.log("tick", f"queue: {stats['queued']} pending, {stats['processing']} processing, {stats['completed']} completed")
+        if stats["queued"] > 0:
+            providers_needed = self.conn.execute(
+                "SELECT DISTINCT provider FROM content_video_queue WHERE status='queued'"
+            ).fetchall()
+            missing = [r["provider"] for r in providers_needed if not self._get_api_key(r["provider"])]
+            if missing:
+                self.log(
+                    "tick",
+                    f"queue blocked: missing API keys for {', '.join(sorted(set(missing)))}",
+                )
+            else:
+                try:
+                    result = self._process_queue()
+                    self.log("tick", f"processed queue: {result}")
+                except Exception as exc:
+                    self.log("error", f"queue process failed: {exc}")
+        elif stats["processing"] > 0:
+            self.log(
+                "tick",
+                f"queue: {stats['processing']} processing, {stats['completed']} completed",
+            )
 
     def report(self):
         budget = self._get_budget()

@@ -30,6 +30,7 @@ DASHBOARDS._default = function (d) {
     h += '<div class="dash-card"><h4>Report</h4><pre class="dash-json">' + escapeHtml(JSON.stringify(rp, null, 2)) + '</pre></div>';
   }
   h += dashEvents(d || {});
+  h += dashTrace(d || {});
   h += '</div>';
   return h;
 };
@@ -183,6 +184,7 @@ DASHBOARDS.shopify = function dashShopify(d) {
   }
 
   h += dashEvents(d);
+  h += dashTrace(d);
   h += '</div>';
   return h;
 };
@@ -596,4 +598,34 @@ function dashEvents(d) {
   }
   h += '</div>';
   return h;
+}
+
+// ── Reasoning Trace feed (CTMS-style <tag:type:ctmsact>) ──────────────
+function traceClass(glyph) {
+  if (glyph === '♢') return 't-think';
+  if (glyph === '⊨') return 't-ok';
+  if (glyph === '↺') return 't-warn';
+  if (glyph === '⋔') return 't-branch';
+  if (glyph === '↑') return 't-up';
+  if (glyph === '⍟') return 't-meta';
+  return '';
+}
+
+function renderTraceHtml(traces) {
+  if (!traces || !traces.length) return '<div class="hint">No trace activity yet.</div>';
+  let h = '';
+  for (const t of traces.slice(0, 40)) {
+    h += '<div class="trace-line ' + traceClass(t.ctmsact) + '">'
+      + '<span class="trace-tag">' + esc(t.tag) + ':' + esc(t.type) + ':' + esc(t.ctmsact) + '</span> '
+      + '<span class="trace-content">' + esc(t.content) + '</span>'
+      + '<span class="trace-time">' + (t.created_at || '').slice(11, 19) + '</span>'
+      + '</div>';
+  }
+  return h;
+}
+
+function dashTrace(d) {
+  const traces = d.traces || [];
+  if (!traces.length) return '';
+  return '<div class="dash-card"><h4>Reasoning Trace</h4><div class="trace-feed">' + renderTraceHtml(traces) + '</div></div>';
 }

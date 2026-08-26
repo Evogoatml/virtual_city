@@ -831,3 +831,48 @@ select, button, input, textarea { font-family: var(--font); }
   padding: 8px;
   border-radius: 6px;
 }
+
+/* ── Reasoning Trace feed ───────────────────────────────────────── */
+.trace-feed {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #060a11;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.trace-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 2px 4px;
+  border-left: 2px solid #444;
+  border-radius: 2px;
+}
+.trace-tag {
+  color: #8ab4f8;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.trace-content {
+  color: var(--text-secondary);
+  flex: 1;
+  word-break: break-word;
+}
+.trace-time {
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-size: 10px;
+}
+.trace-line.t-think  { border-color: #8ab4f8; }
+.trace-line.t-ok     { border-color: var(--accent-green); }
+.trace-line.t-warn   { border-color: var(--accent-gold); }
+.trace-line.t-branch { border-color: var(--accent-purple); }
+.trace-line.t-up     { border-color: var(--accent-cyan); }
+.trace-line.t-meta   { border-color: #ff7043; }

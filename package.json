@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@shopify/storefront-api-client": "^2.0.0"
+  }
+}

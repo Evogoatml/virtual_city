@@ -1,12 +1,8 @@
 """
 Research Building — Orchestrates Sourcing & Research department.
-Departments are internal components, not separate agents.
+Aggregates registry-owned departments (does not re-instantiate them).
 """
 from city.agent import Agent
-from city.db import now_iso
-
-# Import internal department
-from .sourcing_research import SourcingResearchDepartment
 
 
 class ResearchBuildingAgent(Agent):
@@ -14,6 +10,8 @@ class ResearchBuildingAgent(Agent):
     subject = "Research Building"
     district = "Research Quarter"
     color = "#00bcd4"
+
+    DEPT_NAMES = ("sourcing_research",)
 
     def setup_schema(self):
         self.conn.execute("""
@@ -28,10 +26,9 @@ class ResearchBuildingAgent(Agent):
         self.conn.commit()
 
     def _get_departments(self):
-        """Lazy-create departments with current connection."""
-        return {
-            "sourcing_research": SourcingResearchDepartment(self.conn),
-        }
+        from city.registry import get_registry
+        registry = get_registry(self.conn)
+        return {name: registry[name] for name in self.DEPT_NAMES if name in registry}
 
     def register_rules(self):
         self.rule(r"^departments$")(self._list_departments)
@@ -53,20 +50,24 @@ class ResearchBuildingAgent(Agent):
         return {"department": dept, "status": dept_agent.report()}
 
     def _building_status(self):
-        agg = {"open_leads": 0, "actioned_leads": 0, "avg_score": 0}
-        for name, agent in self._get_departments().items():
+        agg = {"open_leads": 0, "actioned_leads": 0, "avg_score": 0.0}
+        n = 0
+        for agent in self._get_departments().values():
             try:
                 r = agent.report()
-                for k in agg:
-                    if k in r:
-                        agg[k] += r[k]
             except Exception:
-                pass
+                continue
+            agg["open_leads"] += int(r.get("open_leads") or 0)
+            agg["actioned_leads"] += int(r.get("actioned_leads") or 0)
+            score = r.get("avg_open_score", r.get("avg_score"))
+            if isinstance(score, (int, float)):
+                agg["avg_score"] += float(score)
+                n += 1
         return {
             "building": self.name,
             "open_leads": agg["open_leads"],
             "actioned_leads": agg["actioned_leads"],
-            "avg_open_score": agg["avg_score"],
+            "avg_open_score": round(agg["avg_score"] / n, 2) if n else 0,
         }
 
     def _aggregate(self):
@@ -77,12 +78,4 @@ class ResearchBuildingAgent(Agent):
         self.log("tick", f"{status['open_leads']} open leads")
 
     def report(self):
-        status = self._building_status()
-        try:
-            from city.registry import get_registry
-            wc = get_registry(self.conn).get("web_check")
-            if wc:
-                status["web_check"] = wc.report()
-        except Exception:
-            pass
-        return status
+        return self._building_status()

@@ -372,7 +372,9 @@ class CryptoTradingDepartment(Department):
         return {
             "department": self.name,
             "subject": self.subject,
+            "mode": "paper",
             "open_positions": pnl["open_positions"],
             "total_trades": pnl["total_trades"],
             "pnl": pnl["total_pnl"],
+            "realized_pnl_usd": pnl["total_pnl"],
         }

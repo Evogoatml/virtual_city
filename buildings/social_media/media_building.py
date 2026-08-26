@@ -1,14 +1,8 @@
 """
 Media Building — Orchestrates Content Creation, Automation, Analytics departments.
-Departments are internal components, not separate agents.
+Aggregates registry-owned departments (does not re-instantiate them).
 """
 from city.agent import Agent
-from city.db import now_iso
-
-# Import internal departments
-from .content_creation import ContentCreationDepartment
-from .content_automation import ContentAutomationDepartment
-from .content_analytics import ContentAnalyticsDepartment
 
 
 class MediaBuildingAgent(Agent):
@@ -16,6 +10,8 @@ class MediaBuildingAgent(Agent):
     subject = "Media Building"
     district = "Media District"
     color = "#9c27b0"
+
+    DEPT_NAMES = ("content_creation", "content_automation", "content_analytics")
 
     def setup_schema(self):
         self.conn.execute("""
@@ -30,12 +26,10 @@ class MediaBuildingAgent(Agent):
         self.conn.commit()
 
     def _get_departments(self):
-        """Lazy-create departments with current connection."""
-        return {
-            "content_creation": ContentCreationDepartment(self.conn),
-            "content_automation": ContentAutomationDepartment(self.conn),
-            "content_analytics": ContentAnalyticsDepartment(self.conn),
-        }
+        """Pull live department agents from the city registry."""
+        from city.registry import get_registry
+        registry = get_registry(self.conn)
+        return {name: registry[name] for name in self.DEPT_NAMES if name in registry}
 
     def register_rules(self):
         self.rule(r"^departments$")(self._list_departments)
@@ -57,24 +51,42 @@ class MediaBuildingAgent(Agent):
         return {"department": dept, "status": dept_agent.report()}
 
     def _building_status(self):
-        agg = {"ideas": 0, "drafts": 0, "published": 0, "videos": 0, "video_cost": 0, "engagement": 0, "roi": 0}
-        for name, agent in self._get_departments().items():
+        agg = {
+            "ideas": 0,
+            "drafts": 0,
+            "published": 0,
+            "videos": 0,
+            "video_cost": 0.0,
+            "engagement": 0.0,
+            "roi": 0.0,
+        }
+        depts = self._get_departments()
+        eng_n = 0
+        for agent in depts.values():
             try:
                 r = agent.report()
-                for k in agg:
-                    if k in r:
-                        agg[k] += r[k]
             except Exception:
-                pass
+                continue
+            agg["ideas"] += int(r.get("ideas") or 0)
+            agg["drafts"] += int(r.get("drafts") or 0)
+            agg["published"] += int(r.get("published") or 0)
+            agg["videos"] += int(r.get("total_videos") or r.get("videos") or 0)
+            agg["video_cost"] += float(r.get("total_cost_usd") or r.get("video_cost") or 0)
+            if "avg_engagement" in r and isinstance(r["avg_engagement"], (int, float)):
+                agg["engagement"] += float(r["avg_engagement"])
+                eng_n += 1
+            if "roi_percentage" in r and isinstance(r["roi_percentage"], (int, float)):
+                agg["roi"] = float(r["roi_percentage"])  # last/analytics wins
         return {
             "building": self.name,
+            "departments_online": list(depts.keys()),
             "total_ideas": agg["ideas"],
             "total_drafts": agg["drafts"],
             "total_published": agg["published"],
             "total_videos": agg["videos"],
-            "total_video_cost_usd": agg["video_cost"],
-            "avg_engagement": agg["engagement"],
-            "roi_percentage": agg["roi"],
+            "total_video_cost_usd": round(agg["video_cost"], 2),
+            "avg_engagement": round(agg["engagement"] / eng_n, 2) if eng_n else 0,
+            "roi_percentage": round(agg["roi"], 2),
         }
 
     def _aggregate(self):
@@ -82,7 +94,10 @@ class MediaBuildingAgent(Agent):
 
     def work(self):
         status = self._building_status()
-        self.log("tick", f"published={status['total_published']}, videos={status['total_videos']}")
+        self.log(
+            "tick",
+            f"published={status['total_published']}, videos={status['total_videos']}",
+        )
 
     def report(self):
         return self._building_status()

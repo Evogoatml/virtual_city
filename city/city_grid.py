@@ -14,11 +14,9 @@ BUILDING_H = 120
 # (col, row) grid positions. CEO gets double width.
 BUILDINGS = {
     "city_hall": (2, 1),           # Center - CEO
-    "finance_building": (0, 0),    # NW corner
-    "crypto_trading": (1, 0),
+    "finance_building": (0, 0),    # NW corner — owns market_data, finance_treasury
+    "crypto_trading": (1, 0),       # standalone trading building
     "btc_recovery": (2, 0),         # BTC Recovery above CEO
-    "market_data": (0, 1),
-    "finance_treasury": (1, 1),
     "media_building": (4, 0),      # NE corner
     "content_creation": (3, 0),
     "content_automation": (3, 1),
@@ -35,7 +33,7 @@ BUILDINGS = {
 
 # For display: which departments belong to which district
 DEPARTMENTS = {
-    "finance_building": ["crypto_trading", "market_data", "btc_recovery"],
+    "finance_building": ["market_data", "finance_treasury"],
     "media_building": ["content_creation", "content_automation", "content_analytics"],
     "research_building": ["sourcing_research", "web_check", "scraper"],
 }
@@ -60,11 +58,26 @@ def layout_city(conn, agents: dict):
 
 def get_city_state(conn):
     rows = conn.execute("SELECT * FROM agents ORDER BY y, x").fetchall()
-    buildings = [dict(r) for r in rows]
+    # Only actual buildings (in BUILDINGS) are shown as standalone buildings.
+    # Departments (e.g. finance_treasury, market_data) live under their parent.
+    buildings = [dict(r) for r in rows if r["name"] in BUILDINGS]
 
     for building in buildings:
         bname = building["name"]
         if bname in DEPARTMENTS:
             building["departments"] = DEPARTMENTS[bname]
 
-    return buildings
+    # Operator context: active persona + north-star + brain size
+    try:
+        from city.persona import active_persona, north_star, active_buildings
+        from city.brain import brain
+        state = {
+            "buildings": buildings,
+            "persona": active_persona(),
+            "north_star": north_star(),
+            "active_buildings": active_buildings(),
+            "brain_notes": len(brain().list_notes()),
+        }
+        return state
+    except Exception:
+        return buildings

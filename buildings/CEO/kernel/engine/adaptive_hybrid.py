@@ -22,8 +22,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCcFrJQd1u8cxsKyCZfCxDt7P4lJPwgxWE")
-GEMINI_URL = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}'
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_URL = (
+    f"https://generativelanguage.googleapis.com/v1beta/models/"
+    f"gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+    if GEMINI_API_KEY
+    else ""
+)
 
 OLLAMA_BASE = os.getenv("OLLAMA_BASE", "http://localhost:11434")
 

@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 from flask import Flask, render_template, request, jsonify, Response
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from dotenv import load_dotenv
 from city.db import init_db, get_db, close_db, get_raw_connection
@@ -25,6 +26,32 @@ load_dotenv()  # loads .env into os.environ before anything uses it
 
 app = Flask(__name__)
 
+# Mutating routes require CITY_API_KEY when set (header X-City-Api-Key or ?api_key=)
+_MUTATING_PREFIXES = (
+    "/api/query",
+    "/api/meeting",
+    "/api/plan",
+    "/api/budget/pause",
+    "/api/budget/resume",
+    "/api/webcheck/",
+)
+
+
+@app.before_request
+def require_city_api_key():
+    key = os.environ.get("CITY_API_KEY", "").strip()
+    if not key:
+        return None
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return None
+    path = request.path or ""
+    if not any(path.startswith(p) for p in _MUTATING_PREFIXES):
+        return None
+    provided = request.headers.get("X-City-Api-Key") or request.args.get("api_key") or ""
+    if provided != key:
+        return jsonify({"error": "unauthorized", "hint": "set X-City-Api-Key header"}), 401
+    return None
+
 
 def bootstrap():
     """Init schema, discover agents, lay out the city. Runs once at startup."""
@@ -32,6 +59,11 @@ def bootstrap():
     conn = get_raw_connection()
     agents = discover_and_build(conn)
     layout_city(conn, agents)
+    # Real cross-building interaction wiring (idempotent subscriptions).
+    from city.orchestrator import EventBus
+    EventBus.subscribe("finance_treasury", "social_affiliates")
+    EventBus.subscribe("finance_treasury", "shopify", "shopify.order_paid")
+    EventBus.subscribe("social_affiliates", "media_building", "content.published")
     conn.close()
 
 
@@ -86,13 +118,93 @@ scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(work_tick, "interval", seconds=30, id="work_tick")
 scheduler.add_job(scheduled_meeting, "interval", hours=24, id="daily_meeting")
 scheduler.start()
+
+
+# --- Per-building autonomous clocks (#1) + deferred-action runner (#3) ---
+def cog_tick(name):
+    """Run one reasoning step for a single building on its own cadence."""
+    conn = get_raw_connection()
+    try:
+        registry = get_registry(conn)
+        agent = registry.get(name)
+        if agent:
+            agent.conn = conn
+            agent.cognitive_tick()
+    finally:
+        conn.close()
+
+
+def cog_schedule_tick():
+    """Execute each building's deferred scheduled actions as their due time arrives."""
+    conn = get_raw_connection()
+    try:
+        registry = get_registry(conn)
+        for agent in registry.values():
+            try:
+                agent.conn = conn
+                agent.run_due_actions()
+            except Exception:
+                pass
+    finally:
+        conn.close()
+
+
+for _name in list(get_registry(None).keys()):
+    try:
+        _agent = get_registry(None)[_name]
+        _iv = int(getattr(_agent, "cog_interval", 30) or 30)
+        scheduler.add_job(cog_tick, "interval", seconds=_iv, id=f"cog_{_name}", args=[_name])
+    except Exception:
+        pass
+scheduler.add_job(cog_schedule_tick, "interval", seconds=15, id="cog_schedule")
+
+
+# --- Brain-aware Agent Runtime tick (#real autonomous runs) ---
+def runtime_tick():
+    """Run one Brain-aware runtime cycle per building (LLM only if configured)."""
+    from city import llm
+    if not llm.enabled():
+        return
+    conn = get_raw_connection()
+    try:
+        registry = get_registry(conn)
+        for agent in registry.values():
+            try:
+                agent.conn = conn
+                agent.runtime_run()
+            except Exception as exc:
+                print(f"[runtime_tick] {agent.name} error: {exc}")
+    finally:
+        conn.close()
+
+
+scheduler.add_job(runtime_tick, "interval", seconds=180, id="runtime_tick")
+
 atexit.register(lambda: scheduler.shutdown(wait=False))
+
+# Buildings register their own scheduled jobs (self-contained).
+from buildings.shopify import register_scheduler as _register_shopify_scheduler
+_register_shopify_scheduler(scheduler)
+
+# Buildings own their own HTTP routes (self-contained).
+from buildings.shopify import shopify_bp
+app.register_blueprint(shopify_bp, url_prefix="/api/shopify")
 
 
 # --- Views ---
 @app.route("/")
 def index():
     return render_template("city.html")
+
+
+@app.route("/operator")
+def operator_view():
+    return render_template("operator.html")
+
+
+@app.route("/health")
+def health():
+    return ("ok", 200)
 
 
 @app.route("/api/city")
@@ -109,15 +221,47 @@ def api_agent_detail(name):
     agent = registry.get(name)
     if not agent:
         return jsonify({"error": f"unknown agent '{name}'"}), 404
+
+    def safe(fn, *a, default=None):
+        try:
+            return fn(*a)
+        except Exception as exc:
+            return {"_error": str(exc)}
+
+    skills = []
+    try:
+        skills = [{"name": s.name, "risk": s.risk, "cost": s.cost_kind,
+                   "event": s.event, "description": s.description} for s in agent.skills]
+    except Exception as exc:
+        skills = [{"_error": str(exc)}]
     return jsonify(
         {
             "name": agent.name,
             "subject": agent.subject,
             "district": agent.district,
-            "report": agent.report(),
-            "recent_events": agent.recent_events(20),
+            "autonomy": safe(agent.autonomy_level),
+            "skills": skills,
+            "report": safe(agent.report),
+            "recent_events": safe(agent.recent_events, 20),
+            "cognitive": safe(agent.cognition.state) if hasattr(agent, "cognition") else {},
         }
     )
+
+
+@app.route("/api/agent/<name>/traces")
+def api_agent_traces(name):
+    """Causal reasoning trail for an agent in <tag:type:ctmsact> form."""
+    conn = get_db()
+    registry = get_registry(conn)
+    agent = registry.get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    rows = conn.execute(
+        "SELECT tag, type, ctmsact, content, created_at FROM traces "
+        "WHERE agent_name = ? ORDER BY id DESC LIMIT 50",
+        (name,),
+    ).fetchall()
+    return jsonify({"agent": name, "traces": [dict(r) for r in rows]})
 
 
 @app.route("/api/building/<name>/dashboard")
@@ -134,8 +278,30 @@ def api_building_dashboard(name):
 
     payload = {"name": agent.name, "subject": agent.subject, "report": report, "events": events}
 
-    # --- Per-building dashboard data ---
+    # Live reasoning state from this building's autonomous orchestrator.
+    if hasattr(agent, "cognition"):
+        payload["cognitive"] = agent.cognition.state()
+        payload["chronolog"] = agent.cognition.chronolog(30)
+
+    # --- Per-building dashboard data (self-contained) ---
     name = agent.name
+
+    # Every building now emits a reasoning trace; show it for all.
+    rows = conn.execute(
+        "SELECT tag, type, ctmsact, content, created_at FROM traces "
+        "WHERE agent_name = ? ORDER BY id DESC LIMIT 40",
+        (name,),
+    ).fetchall()
+    payload["traces"] = [dict(r) for r in rows]
+
+    # A building that defines dashboard_payload() contributes its own data.
+    if hasattr(agent, "dashboard_payload"):
+        try:
+            extra = agent.dashboard_payload(agent.conn)
+            if isinstance(extra, dict):
+                payload.update(extra)
+        except Exception:
+            pass
 
     if name == "crypto_trading":
         try:
@@ -169,23 +335,10 @@ def api_building_dashboard(name):
         except Exception:
             payload["top_utxos"] = []
 
-    elif name == "shopify":
-        try:
-            orders = agent.conn.execute(
-                "SELECT * FROM shopify_orders ORDER BY created_at DESC LIMIT 30"
-            ).fetchall()
-            payload["orders"] = [dict(r) for r in orders]
-            top = agent.conn.execute(
-                "SELECT product, SUM(revenue) as rev FROM shopify_orders GROUP BY product ORDER BY rev DESC LIMIT 10"
-            ).fetchall()
-            payload["top_products"] = [dict(r) for r in top]
-        except Exception:
-            payload["orders"] = []
-
     elif name == "product_flipping":
         try:
             items = agent.conn.execute(
-                "SELECT * FROM flip_items ORDER BY created_at DESC LIMIT 30"
+                "SELECT * FROM flip_items ORDER BY sourced_at DESC LIMIT 30"
             ).fetchall()
             payload["inventory"] = [dict(r) for r in items]
         except Exception:
@@ -212,7 +365,7 @@ def api_building_dashboard(name):
     elif name == "content_automation":
         try:
             jobs = agent.conn.execute(
-                "SELECT * FROM auto_queue ORDER BY created_at DESC LIMIT 30"
+                "SELECT * FROM content_video_queue ORDER BY created_at DESC LIMIT 30"
             ).fetchall()
             payload["queue"] = [dict(r) for r in jobs]
         except Exception:
@@ -230,7 +383,7 @@ def api_building_dashboard(name):
     elif name == "sourcing_research":
         try:
             leads = agent.conn.execute(
-                "SELECT * FROM source_leads ORDER BY score DESC LIMIT 30"
+                "SELECT * FROM sourcing_leads ORDER BY score DESC LIMIT 30"
             ).fetchall()
             payload["leads"] = [dict(r) for r in leads]
         except Exception:
@@ -239,7 +392,7 @@ def api_building_dashboard(name):
     elif name == "market_data":
         try:
             prices = agent.conn.execute(
-                "SELECT * FROM market_prices ORDER BY updated_at DESC LIMIT 30"
+                "SELECT * FROM market_snapshots ORDER BY id DESC LIMIT 30"
             ).fetchall()
             payload["prices"] = [dict(r) for r in prices]
         except Exception:
@@ -248,7 +401,7 @@ def api_building_dashboard(name):
     elif name == "finance_treasury":
         try:
             entries = agent.conn.execute(
-                "SELECT * FROM treasury_ledger ORDER BY created_at DESC LIMIT 30"
+                "SELECT * FROM ledger ORDER BY created_at DESC LIMIT 30"
             ).fetchall()
             payload["ledger"] = [dict(r) for r in entries]
         except Exception:
@@ -257,7 +410,7 @@ def api_building_dashboard(name):
     elif name == "city_hall":
         try:
             meetings = agent.conn.execute(
-                "SELECT * FROM meetings ORDER BY held_at DESC LIMIT 10"
+                "SELECT * FROM meetings ORDER BY timestamp DESC LIMIT 10"
             ).fetchall()
             payload["meetings"] = [dict(r) for r in meetings]
         except Exception:
@@ -357,6 +510,127 @@ def api_trigger_meeting():
     if not city_hall:
         return jsonify({"error": "city_hall agent not found"}), 500
     return jsonify(city_hall.hold_meeting())
+
+
+@app.route("/api/building/<name>/chronolog")
+def api_building_chronolog(name):
+    """Chronological ledger of a building's autonomous reasoning (#2)."""
+    conn = get_db()
+    registry = get_registry(conn)
+    agent = registry.get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    rows = agent.cognition.chronolog(50) if hasattr(agent, "cognition") else []
+    return jsonify({"agent": name, "chronolog": rows})
+
+
+@app.route("/api/building/<name>/schedule")
+def api_building_schedule(name):
+    """This building's deferred scheduled actions (#3)."""
+    conn = get_db()
+    registry = get_registry(conn)
+    agent = registry.get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    from city.db import due_actions
+    return jsonify({"agent": name, "scheduled": due_actions(conn, name)})
+
+
+# --- Brain-aware Agent Runtime API ---
+@app.route("/api/agent/<name>/run", methods=["POST"])
+def api_agent_run(name):
+    """Run one Brain-aware runtime cycle for a building (LLM decides skills)."""
+    conn = get_db()
+    registry = get_registry(conn)
+    agent = registry.get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    payload = request.get_json(force=True, silent=True) or {}
+    intent = payload.get("intent")
+    persona = payload.get("persona")
+    return jsonify(agent.runtime_run(intent=intent, persona=persona))
+
+
+@app.route("/api/agent/<name>/skill/<skill>", methods=["POST"])
+def api_agent_skill(name, skill):
+    """Invoke a single skill directly (works offline; guarantees interaction paths)."""
+    conn = get_db()
+    registry = get_registry(conn)
+    agent = registry.get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    found = next((s for s in agent.skills if s.name == skill), None)
+    if not found:
+        return jsonify({"error": f"no skill '{skill}' on {name}"}), 404
+    args = (request.get_json(force=True, silent=True) or {})
+    try:
+        agent.conn = conn
+        from city.runtime import can_execute, RUNTIME
+        if not can_execute(agent, found):
+            return jsonify({"ok": False, "blocked": True,
+                             "reason": f"autonomy {agent.autonomy_level()} < risk {found.risk}"})
+        result = found.run(agent, **args)
+        if found.event:
+            from city.orchestrator import EventBus
+            EventBus.publish(agent.name, found.event, f"{skill} -> {found.event}", result)
+        from city.db import log_run
+        log_run(conn, agent.name, None, None, skill, "ok", result)
+        return jsonify({"ok": True, "agent": name, "skill": skill, "result": result})
+    except Exception as exc:
+        return jsonify({"ok": False, "agent": name, "skill": skill, "error": str(exc)}), 500
+
+
+@app.route("/api/agent/<name>/runs")
+def api_agent_runs(name):
+    conn = get_db()
+    registry = get_registry(conn)
+    if not registry.get(name):
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    from city.db import recent_runs
+    return jsonify({"agent": name, "runs": recent_runs(conn, name, 40)})
+
+
+@app.route("/api/brain")
+def api_brain():
+    from city.brain import brain
+    notes = brain().list_notes()
+    return jsonify({"notes": [
+        {"slug": n.slug, "title": n.title, "tags": n.tags,
+         "buildings": n.buildings, "personas": n.personas}
+        for n in notes
+    ]})
+
+
+@app.route("/api/brain/<slug>")
+def api_brain_note(slug):
+    from city.brain import brain
+    note = brain().get_note(slug)
+    if not note:
+        return jsonify({"error": f"no note '{slug}'"}), 404
+    return jsonify({"slug": note.slug, "title": note.title, "meta": note.meta, "body": note.body})
+
+
+@app.route("/api/persona")
+def api_persona():
+    from city.persona import list_personas, active_persona, load_persona, north_star
+    active = active_persona()
+    return jsonify({
+        "active": active,
+        "north_star": north_star(),
+        "personas": [load_persona(p) for p in list_personas()],
+    })
+
+
+@app.route("/api/persona/activate", methods=["POST"])
+def api_persona_activate():
+    from city.persona import set_active_persona, active_persona
+    data = request.get_json(force=True, silent=True) or {}
+    name = data.get("name")
+    if not name:
+        return jsonify({"error": "missing 'name'"}), 400
+    if not set_active_persona(name):
+        return jsonify({"error": f"unknown persona '{name}'"}), 404
+    return jsonify({"ok": True, "active": active_persona()})
 
 
 @app.route("/api/stream")
@@ -558,5 +832,8 @@ def api_budget_resume():
 
 if __name__ == "__main__":
     import logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
-    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+    host = os.environ.get("CITY_HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT") or os.environ.get("CITY_PORT", "5000"))
+    app.run(host=host, port=port, debug=False, threaded=True)

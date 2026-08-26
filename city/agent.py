@@ -3,8 +3,10 @@ Base Agent class. Each building in the city is backed by one Agent
 subclass. Processing is rule-based (keyword/regex dispatch) — no LLM
 calls, per spec.
 """
+import os
 import re
 from city.db import log_event, set_status, now_iso
+from city.cognition import CognitiveOrchestrator
 
 
 class Agent:
@@ -17,8 +19,11 @@ class Agent:
     def __init__(self, conn):
         self.conn = conn
         self._rules = []  # list of (compiled_regex, handler_name)
+        self.skills = []  # list[Skill] for the real Agent Runtime
+        self.cognition = CognitiveOrchestrator(self)  # per-building autonomous orchestrator
         self.setup_schema()
         self.register_rules()
+        self.register_skills()
         self._register_orchestrator()
 
     def _register_orchestrator(self):
@@ -35,13 +40,59 @@ class Agent:
         """Populate self._rules with (pattern, handler) pairs. Override."""
         pass
 
+    def register_skills(self):
+        """Populate self.skills with runtime Skills. Override."""
+        pass
+
     def report(self) -> dict:
         """Summary used by City Hall's daily meeting. Override."""
         return {"agent": self.name, "subject": self.subject, "summary": "no report configured"}
 
+    # Per-building autonomous clock (seconds). Override on any Agent subclass
+    # to give that building its own reasoning cadence (#1 chronoschedule).
+    cog_interval = 30
+
     def work(self):
-        """Called every tick — override to do autonomous background work."""
+        """Called every tick. Domain background work for this building.
+        The autonomous reasoning loop is driven separately on the building's
+        own chronoschedule via cognitive_tick()."""
         pass
+
+    def cognitive_tick(self):
+        """Drive this building's autonomous Cognitive Orchestrator once.
+
+        Disabled by default (COGNITION_ENABLED=1 to turn on) — the symbolic
+        thought-tree is diagnostic noise and has been known to crash under
+        some native/threaded runtimes."""
+        if os.environ.get("COGNITION_ENABLED", "").strip() != "1":
+            return
+        try:
+            self.cognition.step()
+        except Exception as exc:
+            self.trace("observe", "error", "↺", f"cognition step failed: {exc}")
+
+    def run_due_actions(self):
+        """Execute this building's deferred scheduled actions (#3)."""
+        if os.environ.get("COGNITION_ENABLED", "").strip() != "1":
+            return
+        try:
+            self.cognition.run_due_actions()
+        except Exception as exc:
+            self.trace("observe", "error", "↺", f"scheduled actions failed: {exc}")
+
+    def start(self):
+        """Lifecycle hook when the building is brought online. Override as needed."""
+        self.set_status("idle")
+        return {"ok": True, "agent": self.name, "status": "started"}
+
+    def stop(self):
+        """Lifecycle hook when the building is taken offline. Override as needed."""
+        self.set_status("stopped")
+        return {"ok": True, "agent": self.name, "status": "stopped"}
+
+    def handle_event(self, event_type: str, message: str = "", data=None):
+        """Receive a city event. Default is no-op (interaction wiring is Phase 2)."""
+        return None
 
     # --- Shared mechanics ---
     def rule(self, pattern):
@@ -71,6 +122,7 @@ class Agent:
                 ok, reason = budget.allow(self.name, "agent_query", key=qlow[:120], cost=1)
                 if not ok:
                     self.set_status("idle")
+                    self.trace("observe", "plan", "↺", f"budget denied: {reason}")
                     return {
                         "ok": False,
                         "agent": self.name,
@@ -84,7 +136,13 @@ class Agent:
             for pattern, handler in self._rules:
                 m = pattern.match(query)
                 if m:
+                    self.trace("think", "plan", "♢", f"rule {handler.__name__} matched", {"query": query})
                     result = handler(**m.groupdict())
+                    try:
+                        self.cognition.answer_operator(query, max_depth=2)
+                    except Exception:
+                        pass
+                    self.trace("observe", "result", "⊨", f"{handler.__name__} completed")
                     self.log(
                         "query",
                         f"processed: {query!r}",
@@ -92,6 +150,7 @@ class Agent:
                     )
                     self.set_status("idle")
                     return {"ok": True, "agent": self.name, "result": result}
+            self.trace("observe", "plan", "↺", f"no rule matched: {query}")
             self.log("unhandled", f"no rule matched: {query!r}", {"query": query})
             self.set_status("idle")
             return {
@@ -102,14 +161,68 @@ class Agent:
             }
         except Exception as exc:  # keep the building alive even if a rule blows up
             self.set_status("error")
+            self.trace("observe", "error", "↺", f"handler raised: {exc}")
             self.log("error", str(exc), {"query": query})
             return {"ok": False, "agent": self.name, "error": str(exc)}
 
     def help_text(self):
         return f"{self.name} understands {len(self._rules)} command pattern(s). Try 'status' or 'report'."
 
+    # --- Real Agent Runtime hooks (Brain-aware, LLM-driven, budget-gated) ---
+    def add_skill(self, name, description, fn, risk="read", cost_kind="local",
+                  event=None, default=False):
+        """Register a Skill the runtime may invoke. fn(agent, **kwargs) -> result dict."""
+        from city.runtime import Skill
+        self.skills.append(Skill(
+            name=name, description=description, risk=risk, cost_kind=cost_kind,
+            event=event, default=default, fn=fn,
+        ))
+        return self.skills[-1]
+
+    def autonomy_level(self):
+        """human_led | human_assisted | autonomous (from agent_config, else default)."""
+        try:
+            row = self.conn.execute(
+                "SELECT value FROM agent_config WHERE agent_name = ? AND key = 'autonomy'",
+                (self.name,),
+            ).fetchone()
+            if row:
+                val = str(row["value"]).strip()
+                if val in ("human_led", "human_assisted", "autonomous"):
+                    return val
+        except Exception:
+            pass
+        return "human_assisted"
+
+    def set_autonomy(self, level):
+        from city.orchestrator import AgentConfig
+        if level not in ("human_led", "human_assisted", "autonomous"):
+            return False
+        AgentConfig(self.name).set("autonomy", level, category="runtime", secret=False)
+        return True
+
+    def runtime_run(self, intent=None, persona=None):
+        """Execute one Brain-aware runtime cycle for this building."""
+        from city.runtime import RUNTIME
+        from city.persona import active_persona
+        persona = persona or active_persona()
+        return RUNTIME.run(self, persona, intent)
+
+    def recent_runs(self, limit=30):
+        from city.db import recent_runs
+        return recent_runs(self.conn, self.name, limit)
+
     def log(self, event_type, message, data=None):
         log_event(self.conn, self.name, event_type, message, data)
+
+    def trace(self, tag, ctype, ctmsact, content, data=None):
+        """Log a causal reasoning step: thought -> action -> observation.
+
+        Format <tag:type:ctmsact> (see city.db.log_trace). Example:
+            self.trace("think", "plan", "♢", "invoking get_orders", {"limit": 10})
+        """
+        from city.db import log_trace
+        log_trace(self.conn, self.name, tag, ctype, ctmsact, content, data)
 
     def set_status(self, status):
         set_status(self.conn, self.name, status)

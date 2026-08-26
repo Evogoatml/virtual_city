@@ -442,6 +442,13 @@ function openWindow(name) {
     }
   }, 15000);
 
+  // Live reasoning-trace feed (3s) while Monitor tab is open
+  state.traceInterval = setInterval(() => {
+    if (document.body.contains(win) && monitorPane.classList.contains('active') && !document.hidden) {
+      refreshTraceFeed(state);
+    }
+  }, 3000);
+
   openWindows.set(name, state);
   updateCard(name);
 }
@@ -449,6 +456,7 @@ function openWindow(name) {
 // ===================== CLOSE WINDOW =====================
 function closeWindow(state) {
   if (state.monitorInterval) clearInterval(state.monitorInterval);
+  if (state.traceInterval) clearInterval(state.traceInterval);
   if (state.el.parentNode) state.el.parentNode.removeChild(state.el);
   openWindows.delete(state.name);
   updateCard(state.name);
@@ -626,6 +634,23 @@ function loadMonitor(state) {
 
       // Use the per-building dashboard renderer
       monitor.innerHTML = dash(state.name, data);
+    })
+    .catch(() => {});
+}
+
+// ===================== TRACE FEED =====================
+function refreshTraceFeed(state) {
+  const pane = state.el.querySelector('.win-pane[data-pane="monitor"]');
+  if (!pane) return;
+  const feed = pane.querySelector('.trace-feed');
+  if (!feed) return; // this building has no trace panel
+  fetch('/api/agent/' + encodeURIComponent(state.name) + '/traces')
+    .then(r => r.json())
+    .then(data => {
+      const traces = (data && data.traces) || [];
+      feed.innerHTML = (typeof renderTraceHtml === 'function')
+        ? renderTraceHtml(traces)
+        : 'trace render unavailable';
     })
     .catch(() => {});
 }

@@ -52,7 +52,7 @@ class SelfProfile:
                 FROM events
                 WHERE agent_name = ? AND timestamp > datetime('now', ?)
                 GROUP BY type
-            ", (self.agent.name, f'-{hours} hours')).fetchall()
+            """, (self.agent.name, f'-{hours} hours')).fetchall()
             return {r["type"]: r["count"] for r in rows}
         finally:
             conn.close()

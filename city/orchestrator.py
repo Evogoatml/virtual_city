@@ -92,7 +92,8 @@ class EventBus:
 
     @staticmethod
     def publish(agent_name, event_type, message, data=None):
-        """Publish an event. Logs it and routes to subscribers."""
+        """Publish an event. Logs it, routes it to subscribers, and invokes their
+        handle_event() so buildings actually change each other's world."""
         conn = get_raw_connection()
         try:
             log_event(conn, agent_name, event_type, message, data)
@@ -102,21 +103,37 @@ class EventBus:
                 (agent_name, event_type),
             ).fetchall()
             for row in subscribers:
+                sub = row["subscriber_name"]
                 conn.execute(
                     """INSERT INTO events (agent_name, timestamp, type, message, data_json)
                        VALUES (?, ?, ?, ?, ?)""",
-                    (row["subscriber_name"], now_iso(),
+                    (sub, now_iso(),
                      f"from:{agent_name}:{event_type}",
                      f"Event from {agent_name}: {message}",
                      json.dumps({"source": agent_name, "event_type": event_type, "data": data or {}})),
                 )
+                # Real interaction: notify the subscriber agent's handle_event.
+                try:
+                    from city.registry import get_agent
+                    agent = get_agent(sub)
+                    if agent is not None and hasattr(agent, "handle_event"):
+                        prev_conn = getattr(agent, "conn", None)
+                        agent.conn = conn
+                        try:
+                            agent.handle_event(event_type, message, data)
+                        finally:
+                            agent.conn = prev_conn
+                except Exception as exc:
+                    log_event(conn, sub, "event_error",
+                              f"handle_event failed for {event_type}: {exc}")
             conn.commit()
         finally:
             conn.close()
 
     @staticmethod
     def subscribe(subscriber, publisher, event_type="*"):
-        """Subscribe subscriber to all events from publisher (or a specific type)."""
+        """Subscribe subscriber to all events from publisher (or a specific type).
+        Idempotent: duplicate (subscriber, publisher, type) rows are ignored."""
         conn = get_raw_connection()
         try:
             now = now_iso()

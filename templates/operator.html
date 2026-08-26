@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIRTUAL CITY // OPERATOR</title>
+<style>
+  :root{
+    --bg:#0a0c14; --panel:#11141f; --panel2:#161b29; --line:#222a3d;
+    --txt:#c7d2e0; --dim:#7c8aa3; --accent:#39ff14; --accent2:#22d3ee;
+    --warn:#ffb020; --bad:#ff5470; --good:#39ff14;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#05070d;color:var(--txt);font-family:var(--mono);font-size:13px}
+  #bgwebgl{position:fixed;inset:0;width:100%;height:100%;z-index:-1;display:block}
+  a{color:var(--accent2);text-decoration:none}
+  header{display:flex;align-items:center;gap:1rem;padding:.6rem .9rem;background:rgba(8,10,16,.72);
+    backdrop-filter:blur(3px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  header h1{font-size:14px;margin:0;letter-spacing:2px;color:var(--accent)}
+  header .ns{color:var(--dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  header select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+    padding:.3rem .5rem;border-radius:4px;font-family:var(--mono)}
+  .pill{font-size:11px;padding:.2rem .5rem;border:1px solid var(--line);border-radius:999px;color:var(--dim)}
+  .pill.live{color:var(--accent);border-color:var(--accent)}
+  .pill.dead{color:var(--bad);border-color:var(--bad)}
+  main{display:grid;grid-template-columns:300px 1fr 340px;height:calc(100% - 49px)}
+  .col{overflow:auto;border-right:1px solid var(--line);padding:.6rem;background:rgba(8,10,16,.55)}
+  .col:last-child{border-right:none}
+  .h{font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin:.2rem 0 .5rem}
+  .bld{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border:1px solid var(--line);
+    border-radius:5px;margin-bottom:.35rem;cursor:pointer;background:var(--panel)}
+  .bld:hover{border-color:var(--accent2)}
+  .bld.sel{border-color:var(--accent)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:none}
+  .dot.working{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+  .dot.idle{background:var(--good)}
+  .dot.error,.dot.stopped{background:var(--bad)}
+  .bname{font-weight:600}
+  .bsub{color:var(--dim);font-size:11px}
+  .sk{display:flex;justify-content:space-between;padding:.25rem .4rem;border:1px solid var(--line);
+    border-radius:4px;margin-bottom:.25rem;font-size:11px}
+  .rk{font-size:10px;padding:0 .35rem;border-radius:3px}
+  .rk.read{color:var(--good);border:1px solid var(--good)}
+  .rk.write{color:var(--warn);border:1px solid var(--warn)}
+  .rk.destructive{color:var(--bad);border:1px solid var(--bad)}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.5rem;
+    overflow:auto;max-height:240px;color:var(--txt);font-size:11px;margin:.3rem 0}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:4px;
+    padding:.35rem .6rem;cursor:pointer;font-family:var(--mono);font-size:11px}
+  button:hover{border-color:var(--accent)}
+  button.go{border-color:var(--accent);color:var(--accent)}
+  .row{display:flex;gap:.4rem;margin:.3rem 0}
+  .feed{font-size:11px;color:var(--dim)}
+  .feed div{padding:.15rem 0;border-bottom:1px dashed var(--line)}
+  .note{padding:.3rem .4rem;border:1px solid var(--line);border-radius:4px;margin-bottom:.3rem;cursor:pointer}
+  .note:hover{border-color:var(--accent2)}
+  .meta{color:var(--dim);font-size:10px}
+  .kv{display:flex;justify-content:space-between;padding:.15rem 0;font-size:11px}
+  .empty{color:var(--dim);font-style:italic;padding:.5rem}
+</style>
+</head>
+<body>
+<canvas id="bgwebgl"></canvas>
+<header>
+  <h1>VIRTUAL CITY</h1>
+  <span class="pill" id="conn">connecting…</span>
+  <span class="ns" id="northstar">—</span>
+  <label class="meta">persona</label>
+  <select id="persona"></select>
+  <span class="pill" id="braincount">brain —</span>
+</header>
+
+<main>
+  <div class="col">
+    <div class="h">Buildings</div>
+    <div id="buildings"></div>
+  </div>
+
+  <div class="col">
+    <div id="detail"><div class="empty">Select a building to inspect.</div></div>
+  </div>
+
+  <div class="col">
+    <div class="h">Connect Shopify</div>
+    <div class="note" style="cursor:default">
+      <input id="sx_domain" placeholder="store.myshopify.com" style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.3rem;border-radius:4px;font-family:var(--mono);font-size:11px">
+      <input id="sx_token" placeholder="Admin API access token (shpat_...)" style="width:100%;margin-top:.3rem;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.3rem;border-radius:4px;font-family:var(--mono);font-size:11px">
+      <input id="sx_base" placeholder="https://xxx.trycloudflare.com" style="width:100%;margin-top:.3rem;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.3rem;border-radius:4px;font-family:var(--mono);font-size:11px">
+      <button class="go" id="sx_connect" style="margin-top:.4rem">▶ Connect & register webhooks</button>
+      <div id="sx_status" class="meta" style="margin-top:.3rem"></div>
+    </div>
+    <div class="h" style="margin-top:.8rem">Live Feed (SSE)</div>
+    <div class="feed" id="feed"></div>
+    <div class="h" style="margin-top:.8rem">Knowledge Brain</div>
+    <div id="brain"></div>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let selected = null;
+
+async function api(path, opts){
+  const r = await fetch(path, opts||{});
+  if(!r.ok) throw new Error(path+' -> HTTP '+r.status);
+  try { return await r.json(); } catch(e){ throw new Error(path+' -> bad JSON'); }
+}
+function showErr(msg){ $('#detail').innerHTML = '<div class="empty" style="color:var(--bad)">⚠ '+msg+'</div>'; console.error(msg); }
+
+// Shopify one-click connect
+$('#sx_connect').addEventListener('click', async ()=>{
+  const payload = {
+    shop_domain: $('#sx_domain').value.trim(),
+    access_token: $('#sx_token').value.trim(),
+    base_url: $('#sx_base').value.trim(),
+  };
+  if(!payload.shop_domain || !payload.access_token){ $('#sx_status').textContent='need domain + token'; return; }
+  $('#sx_status').textContent='connecting…';
+  try{
+    const r = await api('/api/shopify/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const ok = (r.results||[]).filter(x=>x.result && x.result.get && x.result.get('errors')).length;
+    $('#sx_status').textContent = r.ok ? `connected (${r.results.length} webhooks registered)` : 'failed';
+  }catch(e){ $('#sx_status').textContent='error: '+e.message; }
+});
+
+async function loadPersonas(){
+  const d = await api('/api/persona');
+  const sel = $('#persona'); sel.innerHTML='';
+  (d.personas||[]).forEach(p=>{
+    const o=document.createElement('option'); o.value=p.name; o.textContent=p.title||p.name;
+    if(p.name===d.active) o.selected=true; sel.appendChild(o);
+  });
+  $('#northstar').textContent = d.north_star || '—';
+}
+$('#persona').addEventListener('change', async e=>{
+  await api('/api/persona/activate',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:e.target.value})});
+  loadPersonas();
+});
+
+function statusClass(s){ return s||'idle'; }
+
+async function renderCity(state){
+  const list = $('#buildings'); list.innerHTML='';
+  const builds = (state && state.buildings) ? state.buildings : (Array.isArray(state)?state:[]);
+  (state && state.north_star) && ($('#northstar').textContent = state.north_star);
+  (state && state.brain_notes!=null) && ($('#braincount').textContent = 'brain '+state.brain_notes);
+  builds.forEach(b=>{
+    const el=document.createElement('div'); el.className='bld'+(b.name===selected?' sel':'');
+    el.innerHTML=`<span class="dot ${statusClass(b.status)}"></span>
+      <span><span class="bname">${b.name}</span><br><span class="bsub">${b.subject||''}</span></span>`;
+    el.onclick=()=>{ selected=b.name; renderCity(state); loadDetail(b.name); };
+    list.appendChild(el);
+  });
+}
+
+async function loadDetail(name){
+  try{
+  const [a, runs] = await Promise.all([api('/api/agent/'+name), api('/api/agent/'+name+'/runs')]);
+  const skills = (a.skills||[]).map(s=>
+    `<div class="sk"><span>${s.name}</span><span class="rk ${s.risk}">${s.risk}</span></div>`).join('') || '<div class="empty">no skills</div>';
+  const rep = a.report ? JSON.stringify(a.report,null,2) : '—';
+  const runRows = (runs.runs||[]).slice(0,12).map(r=>
+    `<div class="kv"><span>${r.skill}</span><span>${r.status} · ${r.created_at.slice(11,19)}</span></div>`).join('') || '<div class="empty">no runs yet</div>';
+  $('#detail').innerHTML = `
+    <div class="h">${a.name} — ${a.subject||''}</div>
+    <div class="kv"><span>status</span><span>${a.status||'—'}</span></div>
+    <div class="kv"><span>autonomy</span><span>${a.autonomy||'—'}</span></div>
+    <div class="row">
+      <button class="go" id="runbtn">▶ Run agent</button>
+      <button id="evtbtn">↻ Refresh</button>
+    </div>
+    <div class="h">Skills</div>${skills}
+    <div class="h">Report</div><pre>${rep}</pre>
+    <div class="h">Recent runs</div>${runRows}`;
+  $('#runbtn').onclick = async ()=>{
+    try{
+    $('#runbtn').textContent='running…';
+    await api('/api/agent/'+name+'/run',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    setTimeout(()=>loadDetail(name), 1200);
+    }catch(e){ showErr(e.message); }
+  };
+  $('#evtbtn').onclick = ()=>loadDetail(name);
+  }catch(e){ showErr(e.message); }
+}
+
+async function loadBrain(){
+  const d = await api('/api/brain');
+  const el=$('#brain'); el.innerHTML='';
+  (d.notes||[]).forEach(n=>{
+    const x=document.createElement('div'); x.className='note';
+    x.innerHTML=`<div>${n.title}</div><div class="meta">${n.slug}</div>`;
+    x.onclick=async()=>{
+      const note=await api('/api/brain/'+n.slug);
+      x.innerHTML=`<div>${n.title}</div><pre>${note.body||''}</pre>`;
+    };
+    el.appendChild(x);
+  });
+}
+
+// SSE live feed
+const es = new EventSource('/api/stream');
+let lastCity=null;
+es.onopen = ()=>{ const c=$('#conn'); c.textContent='live'; c.className='pill live'; };
+es.onerror = ()=>{ const c=$('#conn'); c.textContent='offline'; c.className='pill dead'; };
+es.onmessage = (ev)=>{
+  try{
+    const st = JSON.parse(ev.data);
+    lastCity = st;
+    renderCity(st);
+    if(selected) {} // keep selection
+    const t = new Date().toLocaleTimeString();
+    const fb=$('#feed');
+    const newB = (st.buildings||[]).filter(b=>b.status==='working').map(b=>b.name);
+    const line = newB.length? `▸ ${newB.join(', ')} working` : `· tick ${t}`;
+    const d=document.createElement('div'); d.textContent=line; fb.prepend(d);
+    while(fb.children.length>40) fb.removeChild(fb.lastChild);
+  }catch(e){}
+};
+
+(async ()=>{
+  await loadPersonas();
+  const st = await api('/api/city'); lastCity=st; renderCity(st);
+  if(st.buildings&&st.buildings[0]){ selected=st.buildings[0].name; loadDetail(selected); }
+  loadBrain();
+  initWebGL();
+})();
+
+// ---- WebGL city field (raw, no deps) ----
+function initWebGL(){
+  const cv = document.getElementById('bgwebgl');
+  const gl = cv.getContext('webgl'); if(!gl) return;
+  const dpr = ()=>Math.min(window.devicePixelRatio||1, 2);
+  function resize(){ cv.width=Math.floor(innerWidth*dpr()); cv.height=Math.floor(innerHeight*dpr());
+    cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; gl.viewport(0,0,cv.width,cv.height); }
+  resize(); addEventListener('resize', resize);
+
+  const pv=`attribute vec2 p;attribute vec3 c;attribute float s;varying vec3 vc;
+    void main(){vc=c;gl_Position=vec4(p,0.0,1.0);gl_PointSize=s;}`,
+    pf=`precision mediump float;varying vec3 vc;
+    void main(){vec2 d=gl_PointCoord-vec2(0.5);float r=length(d);
+    float a=smoothstep(0.5,0.0,r);gl_FragColor=vec4(vc,a);}`,
+    lv=`attribute vec2 p;attribute vec3 c;attribute float a;varying vec3 vc;varying float va;
+    void main(){vc=c;va=a;gl_Position=vec4(p,0.0,1.0);}`,
+    lf=`precision mediump float;varying vec3 vc;varying float va;
+    void main(){gl_FragColor=vec4(vc,va);}`;
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;};
+  const prog=(v,f)=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));
+    gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);return p;};
+  const PP=prog(pv,pf), LP=prog(lv,lf);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  const pa={p:gl.getAttribLocation(PP,'p'),c:gl.getAttribLocation(PP,'c'),s:gl.getAttribLocation(PP,'s')};
+  const la={p:gl.getAttribLocation(LP,'p'),c:gl.getAttribLocation(LP,'c'),a:gl.getAttribLocation(LP,'a')};
+  const pb=gl.createBuffer(), lb=gl.createBuffer();
+
+  const colorFor = st => st==='working' ? [1,.69,.13]
+    : (st==='error'||st==='stopped') ? [1,.33,.44]
+    : st==='idle' ? [.22,1,.08] : [.49,.54,.64];
+
+  function frame(t){
+    const time=t*0.001;
+    gl.clearColor(.02,.027,.05,1); gl.clear(gl.COLOR_BUFFER_BIT);
+    const bs=((lastCity&&lastCity.buildings)||[]); const W=cv.width,H=cv.height;
+    if(bs.length){
+      let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+      bs.forEach(b=>{const x=b.x||0,y=b.y||0;minX=Math.min(minX,x);maxX=Math.max(maxX,x+(b.w||90));
+        minY=Math.min(minY,y);maxY=Math.max(maxY,y+(b.h||90));});
+      const gw=Math.max(1,maxX-minX), gh=Math.max(1,maxY-minY), pad=.82;
+      const center=bs.find(b=>b.name==='city_hall')||bs[0];
+      const cc=center ? {x:center.x+(center.w||120)/2, y:center.y+(center.h||120)/2} : null;
+      const clip=(x,y)=>{const nx=(x-minX)/gw, ny=(y-minY)/gh;
+        return [(nx*2-1)*pad, (1-(ny*2-1)*pad)];};
+      const pts=[], lines=[];
+      bs.forEach((b,i)=>{
+        const ctr=clip(b.x+(b.w||90)/2, b.y+(b.h||90)/2);
+        const col=colorFor(b.status); const pulse=.5+.5*Math.sin(time*2+i);
+        const size=(b.status==='working'?11+pulse*12:5+pulse*2)*dpr();
+        pts.push(ctr[0],ctr[1],col[0],col[1],col[2],size);
+        if(cc&&b.name!=='city_hall'){ const cc2=clip(cc.x,cc.y);
+          lines.push(ctr[0],ctr[1],col[0],col[1],col[2],.10, cc2[0],cc2[1],col[0],col[1],col[2],.10); }
+      });
+      if(lines.length){
+        gl.useProgram(LP); gl.bindBuffer(gl.ARRAY_BUFFER,lb);
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lines),gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(la.p); gl.vertexAttribPointer(la.p,2,gl.FLOAT,false,24,0);
+        gl.enableVertexAttribArray(la.c); gl.vertexAttribPointer(la.c,3,gl.FLOAT,false,24,8);
+        gl.enableVertexAttribArray(la.a); gl.vertexAttribPointer(la.a,1,gl.FLOAT,false,24,20);
+        gl.drawArrays(gl.LINES,0,lines.length/6);
+      }
+      if(pts.length){
+        gl.useProgram(PP); gl.bindBuffer(gl.ARRAY_BUFFER,pb);
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pts),gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(pa.p); gl.vertexAttribPointer(pa.p,2,gl.FLOAT,false,24,0);
+        gl.enableVertexAttribArray(pa.c); gl.vertexAttribPointer(pa.c,3,gl.FLOAT,false,24,8);
+        gl.enableVertexAttribArray(pa.s); gl.vertexAttribPointer(pa.s,1,gl.FLOAT,false,24,20);
+        gl.drawArrays(gl.POINTS,0,pts.length/6);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>

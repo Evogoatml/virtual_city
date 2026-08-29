@@ -29,7 +29,7 @@ class AgentConfig:
             ).fetchone()
             return row["value"] if row else default
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     def get_all(self):
         conn = get_raw_connection()
@@ -40,7 +40,7 @@ class AgentConfig:
             ).fetchall()
             return [dict(r) for r in rows]
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     def set(self, key, value, category="general", secret=False):
         conn = get_raw_connection()
@@ -57,7 +57,7 @@ class AgentConfig:
             conn.commit()
             return True
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     def delete(self, key):
         conn = get_raw_connection()
@@ -69,7 +69,7 @@ class AgentConfig:
             conn.commit()
             return conn.total_changes > 0
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     def get_accounts(self):
         """Return only non-secret config keys (for UI display)."""
@@ -128,7 +128,7 @@ class EventBus:
                               f"handle_event failed for {event_type}: {exc}")
             conn.commit()
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def subscribe(subscriber, publisher, event_type="*"):
@@ -145,7 +145,7 @@ class EventBus:
             )
             conn.commit()
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def unsubscribe(subscriber, publisher, event_type="*"):
@@ -157,7 +157,7 @@ class EventBus:
             )
             conn.commit()
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def get_subscriptions(agent_name):
@@ -173,7 +173,7 @@ class EventBus:
             ).fetchall()
             return [dict(r) for r in rows]
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +195,7 @@ class GoalTracker:
             conn.commit()
             return cur.lastrowid
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def add_task(goal_id, title, description="", auto_command=""):
@@ -209,7 +209,7 @@ class GoalTracker:
             conn.commit()
             return cur.lastrowid
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def complete_task(task_id):
@@ -226,7 +226,7 @@ class GoalTracker:
             if task:
                 GoalTracker._recalc_progress(task["goal_id"])
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def _recalc_progress(goal_id):
@@ -243,7 +243,7 @@ class GoalTracker:
             )
             conn.commit()
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def get_goals(agent_name):
@@ -262,7 +262,7 @@ class GoalTracker:
                 result.append({**dict(g), "tasks": [dict(t) for t in tasks]})
             return result
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
     @staticmethod
     def parse_plan_into_goals(agent_name, plan_text):
@@ -359,7 +359,7 @@ class PlanExecutor:
                                 pass
                         return  # one task per tick
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
 
 # ---------------------------------------------------------------------------
@@ -410,7 +410,7 @@ class BuildingOrchestrator:
                 }
             return state
         finally:
-            conn.close()
+            pass  # never close thread-local conn (see city/db.py)
 
 
 # Singleton

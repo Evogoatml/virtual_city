@@ -241,6 +241,7 @@ class PredictionMarketConnector:
 
 
 class MarketDataDepartment(BaseAgent):
+    building_name = "finance_building"
     name = "market_data"
     subject = "Market Data Dept"
     district = "Financial District"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# City — Virtual City CLI wrapper
+# Usage: ./scripts/city status|query|run|meeting|...
+exec python3 "$(dirname "$0")/cityctl.py" "$@"

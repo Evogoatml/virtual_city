@@ -1,0 +1,1 @@
+"""Virtual City core package."""

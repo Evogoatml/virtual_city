@@ -7,6 +7,7 @@ from city.db import now_iso
 
 
 class SocialAffiliatesDepartment(Department):
+    building_name = "media_building"
     name = "social_affiliates"
     subject = "Social Affiliates Dept"
     district = "Media District"

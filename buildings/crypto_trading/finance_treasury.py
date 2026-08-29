@@ -1,8 +1,9 @@
-from city.agent import Agent
+from city.department import Department
 from city.db import now_iso
 
 
-class FinanceTreasuryAgent(Agent):
+class FinanceTreasuryAgent(Department):
+    building_name = "finance_building"
     name = "finance_treasury"
     subject = "Finance & Treasury"
     district = "Financial District"

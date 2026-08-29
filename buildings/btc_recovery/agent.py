@@ -13,10 +13,12 @@ from . import toolkit
 
 
 class BTCRecoveryAgent(Department):
+    building_name = "finance_building"
     name = "btc_recovery"
     subject = "Bitcoin Recovery"
     district = "Financial District"
     color = "#f7931a"
+    paused = True  # recovery only runs on-demand (scan, import, run tool)
 
     def __init__(self, conn):
         self._store = None

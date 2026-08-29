@@ -242,75 +242,6 @@ DASHBOARDS.social_affiliates = function dashAffil(d) {
   return h;
 };
 
-// ── Content Creation ────────────────────────────────────────────────
-DASHBOARDS.content_creation = function dashCC(d) {
-  const rp = d.report || {};
-  const pipeline = d.pipeline || [];
-
-  let h = '<div class="dash">';
-  h += '<div class="dash-row">';
-  h += card('Ideas', String(rp.ideas || 0), '');
-  h += card('Drafts', String(rp.drafts || 0), '');
-  h += card('Published', String(rp.published || 0), 'green');
-  h += '</div>';
-
-  if (pipeline.length) {
-    h += '<div class="dash-card"><h4>Pipeline</h4><div class="dash-table-wrap">';
-    h += '<table class="dash-table"><thead><tr><th>Title</th><th>Status</th><th>Platform</th><th>Created</th></tr></thead><tbody>';
-    for (const p of pipeline) {
-      h += '<tr><td>' + esc(p.title || '-') + '</td><td><span class="status-badge ' + (p.status || 'idea') + '">' + (p.status || 'idea') + '</span></td><td>' + esc(p.platform || '-') + '</td><td>' + (p.created_at || '').slice(0, 10) + '</td></tr>';
-    }
-    h += '</tbody></table></div></div>';
-  }
-
-  h += dashEvents(d);
-  h += '</div>';
-  return h;
-};
-
-// ── Content Automation ──────────────────────────────────────────────
-DASHBOARDS.content_automation = function dashCA(d) {
-  const rp = d.report || {};
-  const queue = d.queue || [];
-
-  let h = '<div class="dash">';
-  h += '<div class="dash-row">';
-  h += card('Pending', String(rp.queue_pending || 0), rp.queue_pending > 0 ? 'yellow' : '');
-  h += card('Completed Today', String(rp.completed_today || 0), 'green');
-  h += card('Total', String(rp.total_generations || 0), '');
-  h += '</div>';
-
-  if (queue.length) {
-    h += '<div class="dash-card"><h4>Queue</h4><div class="dash-table-wrap">';
-    h += '<table class="dash-table"><thead><tr><th>Prompt</th><th>Provider</th><th>Status</th><th>Cost</th><th>Created</th></tr></thead><tbody>';
-    for (const q of queue) {
-      h += '<tr><td>' + esc((q.prompt || q.task || '').slice(0, 40)) + '</td><td>' + esc(q.provider || '-') + '</td><td><span class="status-badge ' + (q.status || 'pending') + '">' + (q.status || 'pending') + '</span></td><td>$' + fmtNum(q.cost || 0) + '</td><td>' + (q.created_at || '').slice(0, 10) + '</td></tr>';
-    }
-    h += '</tbody></table></div></div>';
-  }
-
-  h += dashEvents(d);
-  h += '</div>';
-  return h;
-};
-
-// ── Content Analytics ───────────────────────────────────────────────
-DASHBOARDS.content_analytics = function dashAnalytics(d) {
-  const rp = d.report || {};
-  const videos = d.videos || [];
-
-  let h = '<div class="dash">';
-  h += '<div class="dash-row">';
-  h += card('ROI', (rp.roi_percentage || 0) + '%', (rp.roi_percentage || 0) >= 0 ? 'green' : 'red');
-  h += card('Videos', String(rp.total_videos || videos.length), '');
-  h += card('Avg Views', fmtNum(rp.avg_views || 0), '');
-  h += '</div>';
-
-  h += dashEvents(d);
-  h += '</div>';
-  return h;
-};
-
 // ── Sourcing Research ───────────────────────────────────────────────
 DASHBOARDS.sourcing_research = function dashSourcing(d) {
   const rp = d.report || {};
@@ -442,7 +373,7 @@ DASHBOARDS.finance_building = function dashFinanceHub(d) {
   h += '</div>';
   h += '<div class="dash-row">';
   h += card('BTC Addrs', String(bt.addresses || 0), '');
-  h += card('BTC Balance', fmtBtc((bt.confirmed_btc || 0) * 1e8).replace(' ₿',' ₿'), bt.confirmed_btc > 0 ? 'green' : '');
+  h += card('BTC Balance', fmtBtc(bt.btc_confirmed || 0), bt.btc_confirmed > 0 ? 'green' : '');
   h += card('Open Pos', String(ct.open_positions || 0), (ct.open_positions || 0) > 0 ? 'yellow' : '');
   h += '</div>';
   h += dashEvents(d);
@@ -452,19 +383,12 @@ DASHBOARDS.finance_building = function dashFinanceHub(d) {
 
 // ── Media Building (hub) ────────────────────────────────────────────
 DASHBOARDS.media_building = function dashMediaHub(d) {
-  const cc = d.content_creation || {};
-  const ca = d.content_automation || {};
-  const an = d.content_analytics || {};
+  const sa = d.social_affiliates || {};
   let h = '<div class="dash">';
   h += '<div class="dash-row">';
-  h += card('Ideas', String(cc.ideas || 0), '');
-  h += card('Published', String(cc.published || 0), 'green');
-  h += card('Queue', String(ca.queue_pending || 0), '');
-  h += '</div>';
-  h += '<div class="dash-row">';
-  h += card('Videos', String(an.total_videos || 0), '');
-  h += card('ROI', (an.roi_percentage || 0) + '%', (an.roi_percentage || 0) >= 0 ? 'green' : 'red');
-  h += card('Budget', '$' + fmtNum(ca.daily_budget_remaining_usd || 0), '');
+  h += card('Campaigns', String(sa.campaigns || 0), '');
+  h += card('Clicks', String(sa.total_clicks || 0), '');
+  h += card('Revenue', '$' + fmtNum(sa.revenue || 0), 'green');
   h += '</div>';
   h += dashEvents(d);
   h += '</div>';
@@ -475,20 +399,110 @@ DASHBOARDS.media_building = function dashMediaHub(d) {
 DASHBOARDS.research_building = function dashResearchHub(d) {
   const sr = d.sourcing_research || {};
   const wc = d.web_check || {};
+  const ss = d.supply_scout || {};
+  const pf = d.product_flipping || {};
+  const sig = d.signal || {};
   let h = '<div class="dash">';
   h += '<div class="dash-row">';
   h += card('Open Leads', String(sr.open_leads || d.open_leads || 0), '');
-  h += card('Actioned', String(sr.actioned_leads || d.actioned_leads || 0), 'green');
   h += card('Avg Score', String(sr.avg_score || d.avg_open_score || 0), '');
+  h += card('Supply Scout', ss.subject || 'active', 'gold');
   h += '</div>';
   h += '<div class="dash-row">';
   h += card('Web-Check', (wc.service_running ? 'ONLINE' : 'OFFLINE'), wc.service_running ? 'green' : 'red');
   h += card('Scans', String(wc.scans_total || 0), '');
-  h += card('Room', 'available', 'gold');
+  h += card('Flip Items', String(pf.inventory_count || 0), pf.inventory_count > 0 ? 'yellow' : '');
+  h += card('Signals', String(sig.watches || 0), '');
   h += '</div>';
   h += '<div class="dash-card"><h4>Departments</h4><div class="dash-actions">';
-  h += '<span class="hint">Open from Chat tab: Open Sourcing / Open Web-Check</span>';
+  h += '<span class="hint">Enter from Chat: Supply Scout / Enter Sourcing / Enter Flipping / Enter Web-Check / Enter Signal</span>';
   h += '</div></div>';
+  h += dashEvents(d);
+  h += '</div>';
+  return h;
+};
+
+
+// ── Controll Panel (Command Center) ──────────────────────────────────
+DASHBOARDS.controll_panel = function dashControll(d) {
+  const rp = d.report || {};
+  const metrics = rp.metrics || {};
+  const routes = d.pipeline_routes || [];
+  const alerts = d.alerts || [];
+
+  let h = '<div class="dash">';
+  h += '<div class="dash-row">';
+  h += card('Buildings', String(metrics.active_buildings || 0), metrics.error_buildings > 0 ? 'red' : 'green');
+  h += card('Errors', String(metrics.error_buildings || 0), metrics.error_buildings > 0 ? 'red' : '');
+  h += card('Events/hr', String(metrics.event_rate_last_hour || 0), '');
+  h += '</div>';
+  h += '<div class="dash-row">';
+  h += card('Route Logs', String(metrics.route_log_entries || 0), '');
+  h += card('Alerts', String(alerts.filter(function(a){return !a.acknowledged;}).length), alerts.some(function(a){return !a.acknowledged;}) ? 'yellow' : '');
+  h += card('Mode', 'COMMAND', 'gold');
+  h += '</div>';
+
+  if (routes.length) {
+    h += '<div class="dash-card"><h4>Pipeline Routes</h4><div class="dash-table-wrap">';
+    h += '<table class="dash-table"><thead><tr><th>From</th><th>To</th><th>Event</th><th>Events</th></tr></thead><tbody>';
+    for (var ri = 0; ri < routes.length; ri++) {
+      var r = routes[ri];
+      h += '<tr><td>' + esc(r.from || '-') + '</td><td>' + esc(r.to || '-') + '</td><td>' + esc(r.event || '-') + '</td><td>' + (r.total_events || 0) + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+  }
+
+  var subs = d.subscriptions || [];
+  if (subs.length) {
+    h += '<div class="dash-card"><h4>EventBus Wiring</h4><div class="dash-table-wrap">';
+    h += '<table class="dash-table"><thead><tr><th>Subscriber</th><th>Publisher</th><th>Event</th></tr></thead><tbody>';
+    for (var si = 0; si < subs.length && si < 20; si++) {
+      var s = subs[si];
+      h += '<tr><td>' + esc(s.subscriber_name || '-') + '</td><td>' + esc(s.publisher_name || '-') + '</td><td>' + esc(s.event_type || '*') + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+  }
+
+  h += dashEvents(d);
+  h += dashTrace(d);
+  h += '</div>';
+  return h;
+};
+
+// ── Neural Index ─────────────────────────────────────────────────────
+DASHBOARDS.neural_index = function dashNeural(d) {
+  var stats = d.stats || {};
+  var h = '<div class="dash">';
+  h += '<div class="dash-row">';
+  h += card('Files Indexed', String(stats.indexed_files || 0), '');
+  h += card('Knowledge Nodes', String(stats.knowledge_nodes || 0), '');
+  h += card('Folder Agents', String(stats.agents_generated || 0), '');
+  h += '</div>';
+
+  var agents = d.agents || [];
+  if (agents.length) {
+    h += '<div class="dash-card"><h4>Folder Agents</h4><div class="dash-table-wrap">';
+    h += '<table class="dash-table"><thead><tr><th>Agent ID</th><th>Folder</th><th>Updated</th></tr></thead><tbody>';
+    for (var ai = 0; ai < agents.length && ai < 15; ai++) {
+      var a = agents[ai];
+      h += '<tr><td class="mono">' + esc(a.agent_id || '-') + '</td><td>' + esc((a.folder || '').slice(0, 40)) + '</td><td>' + (a.last_updated || '').slice(0, 16) + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+  }
+
+  var files = d.indexed_files || [];
+  if (files.length) {
+    h += '<div class="dash-card"><h4>Recently Indexed</h4><div class="dash-table-wrap">';
+    h += '<table class="dash-table"><thead><tr><th>File</th><th>Size</th><th>Indexed</th></tr></thead><tbody>';
+    for (var fi = 0; fi < files.length && fi < 15; fi++) {
+      var f = files[fi];
+      var fp = f.filepath || '-';
+      var rel = fp.length > 50 ? '...' + fp.slice(-47) : fp;
+      h += '<tr><td class="mono">' + esc(rel) + '</td><td>' + (f.size || 0) + 'B</td><td>' + (f.indexed_at || '').slice(0, 16) + '</td></tr>';
+    }
+    h += '</tbody></table></div></div>';
+  }
+
   h += dashEvents(d);
   h += '</div>';
   return h;

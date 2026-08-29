@@ -1,0 +1,1437 @@
+# AGENT - storefront
+
+**Auto-generated folder agent**  
+**Last Updated:** 2026-08-28 10:05:11  
+**Folder Path:** `/home/sainx/virtual_city/buildings/storefront`  
+**Agent ID:** `pending`
+
+---
+
+## Folder Context
+
+This agent maintains awareness of all files in this folder.
+
+### Files Tracked (454)
+
+#### .css Files (3)
+
+- `shopify/effata-agent/.next/static/css/6ba565e0671c01df.css`
+  - Size: 5.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/app/globals.css`
+  - Size: 813B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/app/routes/_index/styles.module.css`
+  - Size: 867B
+  - Modified: 2026-08-26
+
+#### .html Files (7)
+
+- `shopify/effata-agent/.next/server/app/_not-found.html`
+  - Size: 6.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/actions.html`
+  - Size: 9.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/approvals.html`
+  - Size: 9.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/chat.html`
+  - Size: 9.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/index.html`
+  - Size: 12.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/404.html`
+  - Size: 6.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/500.html`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+
+#### .js Files (101)
+
+- `shopify/effata-agent/.next/prerender-manifest.js`
+  - Size: 1.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/actions/page.js`
+  - Size: 5.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/actions/page_client-reference-manifest.js`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/analytics/page.js`
+  - Size: 9.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/analytics/page_client-reference-manifest.js`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/approvals/page.js`
+  - Size: 5.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/approvals/page_client-reference-manifest.js`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/chat/page.js`
+  - Size: 5.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/chat/page_client-reference-manifest.js`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/page.js`
+  - Size: 5.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/page_client-reference-manifest.js`
+  - Size: 3.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/settings/page.js`
+  - Size: 5.0KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/settings/page_client-reference-manifest.js`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/tasks/page.js`
+  - Size: 4.9KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/tasks/page_client-reference-manifest.js`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/_not-found/page.js`
+  - Size: 3.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/_not-found/page_client-reference-manifest.js`
+  - Size: 3.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/actions/route.js`
+  - Size: 1.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/approvals/[id]/route.js`
+  - Size: 2.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/approvals/route.js`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/chat/route.js`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/inngest/route.js`
+  - Size: 36.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/app/uninstalled/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/checkouts/create/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/customers/create/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/inventory/update/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/orders/cancelled/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/orders/create/route.js`
+  - Size: 4.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/orders/fulfilled/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/products/create/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/products/update/route.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/148.js`
+  - Size: 99.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/221.js`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/471.js`
+  - Size: 91.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/495.js`
+  - Size: 413.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/607.js`
+  - Size: 314.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/682.js`
+  - Size: 33.0KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/771.js`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/783.js`
+  - Size: 19.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/943.js`
+  - Size: 10.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/948.js`
+  - Size: 68.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/964.js`
+  - Size: 213.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/966.js`
+  - Size: 419.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/972.js`
+  - Size: 37.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/interception-route-rewrite-manifest.js`
+  - Size: 48B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/middleware-build-manifest.js`
+  - Size: 822B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/middleware-react-loadable-manifest.js`
+  - Size: 36B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/next-font-manifest.js`
+  - Size: 106B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/_app.js`
+  - Size: 3.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/_document.js`
+  - Size: 378B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/_error.js`
+  - Size: 8.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/server-reference-manifest.js`
+  - Size: 121B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/webpack-runtime.js`
+  - Size: 1.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/23-f2c2ec5da154e115.js`
+  - Size: 120.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/231-87925b9c7247c60f.js`
+  - Size: 20.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/actions/page-2844af11fc4d51fa.js`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/analytics/page-b668c0b295b06332.js`
+  - Size: 171B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/approvals/page-e7aaa4419dbfd012.js`
+  - Size: 1.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/chat/page-fbabda99b7887370.js`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/layout-995884283c33e66e.js`
+  - Size: 210B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/page-9e4c6f6cafed9df7.js`
+  - Size: 171B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/settings/page-aef907edc818c869.js`
+  - Size: 171B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/(dashboard)/tasks/page-3364d1de1d4d1dfc.js`
+  - Size: 171B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/_not-found/page-1fe41d8df168b155.js`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/app/layout-bb2f1ba50ef38545.js`
+  - Size: 229B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/fd9d1056-62aaf4b921c84028.js`
+  - Size: 168.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/framework-f66176bb897dc684.js`
+  - Size: 137.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/main-app-82899c68a0db30a2.js`
+  - Size: 462B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/main-b8283dcebc5c153d.js`
+  - Size: 108.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/pages/_app-6a626577ffa902a4.js`
+  - Size: 280B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/pages/_error-1be831200e60c5c0.js`
+  - Size: 247B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/polyfills-78c92fac7aa8fdd8.js`
+  - Size: 89.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/chunks/webpack-889906d2d9470bce.js`
+  - Size: 3.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/dpU8PolnzVSKL8oebNLP5/_buildManifest.js`
+  - Size: 224B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/static/dpU8PolnzVSKL8oebNLP5/_ssgManifest.js`
+  - Size: 80B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/.graphqlrc.js`
+  - Size: 1008B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/app/db.server.js`
+  - Size: 258B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/app/routes.js`
+  - Size: 84B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/app/shopify.server.js`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-picks/vite.config.js`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/config/rollup/rollup-utils.js`
+  - Size: 2.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/rollup.config.js`
+  - Size: 371B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/rollup.config.js`
+  - Size: 189B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/rollup.config.js`
+  - Size: 190B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/rollup.config.js`
+  - Size: 184B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/rollup.config.js`
+  - Size: 188B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/rollup.config.js`
+  - Size: 189B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/rollup.config.js`
+  - Size: 187B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/rollup.config.js`
+  - Size: 192B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/rollup.config.js`
+  - Size: 188B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/rollup.config.js`
+  - Size: 187B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/rollup.config.js`
+  - Size: 188B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-test-utils/rollup.config.js`
+  - Size: 164B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/rollup.config.js`
+  - Size: 164B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/adapters/__e2etests__/rollup.test-apps.config.js`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/rollup.config.js`
+  - Size: 848B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/rollup.config.js`
+  - Size: 161B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/babel.config.js`
+  - Size: 88B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/rollup.config.js`
+  - Size: 558B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/babel.config.js`
+  - Size: 88B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/rollup.config.js`
+  - Size: 558B
+  - Modified: 2026-08-26
+
+#### .json Files (134)
+
+- `shopify/effata-agent/.next/app-build-manifest.json`
+  - Size: 3.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/app-path-routes-manifest.json`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/build-manifest.json`
+  - Size: 967B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/export-marker.json`
+  - Size: 94B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/images-manifest.json`
+  - Size: 511B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/next-minimal-server.js.nft.json`
+  - Size: 7.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/next-server.js.nft.json`
+  - Size: 32.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/package.json`
+  - Size: 20B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/prerender-manifest.json`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/react-loadable-manifest.json`
+  - Size: 2B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/required-server-files.json`
+  - Size: 4.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/routes-manifest.json`
+  - Size: 1.4KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app-paths-manifest.json`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/actions/page.js.nft.json`
+  - Size: 4.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/analytics/page.js.nft.json`
+  - Size: 4.9KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/approvals/page.js.nft.json`
+  - Size: 4.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/chat/page.js.nft.json`
+  - Size: 4.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/page.js.nft.json`
+  - Size: 4.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/settings/page.js.nft.json`
+  - Size: 4.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/(dashboard)/tasks/page.js.nft.json`
+  - Size: 4.8KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/_not-found/page.js.nft.json`
+  - Size: 4.6KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/actions/route.js.nft.json`
+  - Size: 4.9KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/approvals/[id]/route.js.nft.json`
+  - Size: 5.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/approvals/route.js.nft.json`
+  - Size: 4.9KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/chat/route.js.nft.json`
+  - Size: 5.0KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/inngest/route.js.nft.json`
+  - Size: 4.9KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/app/uninstalled/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/checkouts/create/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/customers/create/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/inventory/update/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/orders/cancelled/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/orders/create/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/orders/fulfilled/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/products/create/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/app/api/webhooks/products/update/route.js.nft.json`
+  - Size: 5.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/chunks/font-manifest.json`
+  - Size: 2B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/font-manifest.json`
+  - Size: 2B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/functions-config-manifest.json`
+  - Size: 484B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/middleware-manifest.json`
+  - Size: 83B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/next-font-manifest.json`
+  - Size: 77B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages-manifest.json`
+  - Size: 111B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/_app.js.nft.json`
+  - Size: 517B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/_document.js.nft.json`
+  - Size: 5.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/pages/_error.js.nft.json`
+  - Size: 5.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/server/server-reference-manifest.json`
+  - Size: 84B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/.next/types/package.json`
+  - Size: 18B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/package-lock.json`
+  - Size: 189.1KB
+  - Modified: 2026-08-26
+- `shopify/effata-agent/package.json`
+  - Size: 766B
+  - Modified: 2026-08-26
+- `shopify/effata-agent/tsconfig.json`
+  - Size: 562B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/.cursor/mcp.json`
+  - Size: 129B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/.gemini/extensions/shopify-dev-mcp/gemini-extension.json`
+  - Size: 180B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/.mcp.json`
+  - Size: 152B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/.shopify/project.json`
+  - Size: 2B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/package-lock.json`
+  - Size: 433.0KB
+  - Modified: 2026-08-26
+- `shopify/effata-picks/package.json`
+  - Size: 2.2KB
+  - Modified: 2026-08-26
+- `shopify/effata-picks/tsconfig.json`
+  - Size: 671B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.changeset/config.json`
+  - Size: 430B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/markdown_link_checker_config.json`
+  - Size: 129B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.oxlintrc.json`
+  - Size: 3.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.vscode/settings.json`
+  - Size: 66B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/package-lock.json`
+  - Size: 325.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/package.json`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/admin-api-client/babel.config.json`
+  - Size: 102B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/admin-api-client/package.json`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/admin-api-client/tsconfig.build.json`
+  - Size: 202B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/admin-api-client/tsconfig.json`
+  - Size: 430B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/babel.config.json`
+  - Size: 102B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/package.json`
+  - Size: 2.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/tsconfig.build.json`
+  - Size: 263B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/tsconfig.json`
+  - Size: 407B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/babel.config.json`
+  - Size: 102B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/package.json`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/tsconfig.build.json`
+  - Size: 205B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/tsconfig.json`
+  - Size: 440B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/tsconfig.umd.json`
+  - Size: 117B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/babel.config.json`
+  - Size: 102B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/package.json`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/tsconfig.build.json`
+  - Size: 229B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/tsconfig.json`
+  - Size: 440B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/tsconfig.umd.json`
+  - Size: 117B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/package.json`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/package.json`
+  - Size: 1.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/package.json`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/package.json`
+  - Size: 1.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/package.json`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/package.json`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/package.json`
+  - Size: 1.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/package.json`
+  - Size: 1.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/package.json`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/package.json`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/tsconfig.build.json`
+  - Size: 399B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-test-utils/package.json`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-test-utils/tsconfig.build.json`
+  - Size: 301B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-test-utils/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/package.json`
+  - Size: 1.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/tsconfig.build.json`
+  - Size: 301B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/tsconfig.json`
+  - Size: 255B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/package.json`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/tsconfig.build.json`
+  - Size: 426B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/tsconfig.json`
+  - Size: 426B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/package.json`
+  - Size: 1.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/tsconfig.build.json`
+  - Size: 396B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/tsconfig.json`
+  - Size: 252B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/docs/generated/generated_docs_data_v2.json`
+  - Size: 312.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/package.json`
+  - Size: 3.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/tsconfig.build.json`
+  - Size: 396B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/tsconfig.json`
+  - Size: 307B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/docs/generated/generated_docs_data_v2.json`
+  - Size: 472.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/package.json`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/tsconfig.build.json`
+  - Size: 396B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/tsconfig.json`
+  - Size: 307B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/tsconfig.base.json`
+  - Size: 829B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/tsconfig.build.json`
+  - Size: 125B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/tsconfig.json`
+  - Size: 1.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/turbo.json`
+  - Size: 413B
+  - Modified: 2026-08-26
+
+#### .md Files (178)
+
+- `shopify/effata-agent/README.md`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/effata-picks/AGENTS.md`
+  - Size: 418B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/CHANGELOG.md`
+  - Size: 5.7KB
+  - Modified: 2026-08-26
+- `shopify/effata-picks/CLAUDE.md`
+  - Size: 11B
+  - Modified: 2026-08-26
+- `shopify/effata-picks/README.md`
+  - Size: 13.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.changeset/README.md`
+  - Size: 510B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/adding-api-versions/SKILL.md`
+  - Size: 3.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/dependabot/fix-broken-major-upgrade/SKILL.md`
+  - Size: 14.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/dependabot/list-broken-major-upgrades/SKILL.md`
+  - Size: 2.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/investigating-github-issues/SKILL.md`
+  - Size: 6.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/investigating-github-issues/references/investigation-report-template.md`
+  - Size: 3.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/prepare-release/SKILL.md`
+  - Size: 2.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/reviewing-pull-requests/SKILL.md`
+  - Size: 7.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/reviewing-pull-requests/references/review-output-template.md`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/reviewing-pull-requests/references/semver-classification.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.claude/skills/shared/references/version-maintenance-policy.md`
+  - Size: 815B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/ISSUE_TEMPLATE/BUG_REPORT.md`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/ISSUE_TEMPLATE/ENHANCEMENT.md`
+  - Size: 228B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`
+  - Size: 217B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/PULL_REQUEST_TEMPLATE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/api_update_reminder.md`
+  - Size: 914B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/api_update_reminder_on_release.md`
+  - Size: 562B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/CODE_OF_CONDUCT.md`
+  - Size: 2.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/CONTRIBUTING.md`
+  - Size: 972B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/README.md`
+  - Size: 11.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/RELEASING.md`
+  - Size: 9.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/README.md`
+  - Size: 2.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/admin-api-client/CHANGELOG.md`
+  - Size: 9.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/admin-api-client/README.md`
+  - Size: 30.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/CHANGELOG.md`
+  - Size: 7.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/api-codegen-preset/README.md`
+  - Size: 15.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/CHANGELOG.md`
+  - Size: 11.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/CODE_OF_CONDUCT.md`
+  - Size: 5.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/graphql-client/README.md`
+  - Size: 17.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/CHANGELOG.md`
+  - Size: 6.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/CODE_OF_CONDUCT.md`
+  - Size: 5.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/api-clients/storefront-api-client/README.md`
+  - Size: 28.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/README.md`
+  - Size: 2.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/README.md`
+  - Size: 5.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/CHANGELOG.md`
+  - Size: 5.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/MIGRATION_TO_EXPIRING_TOKENS.md`
+  - Size: 4.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-drizzle/README.md`
+  - Size: 3.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/CHANGELOG.md`
+  - Size: 10.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-dynamodb/README.md`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/CHANGELOG.md`
+  - Size: 9.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-kv/README.md`
+  - Size: 2.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/CHANGELOG.md`
+  - Size: 7.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-memory/README.md`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/CHANGELOG.md`
+  - Size: 10.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mongodb/README.md`
+  - Size: 1.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/CHANGELOG.md`
+  - Size: 15.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/MIGRATION_TO_EXPIRING_TOKENS.md`
+  - Size: 1.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-mysql/README.md`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/CHANGELOG.md`
+  - Size: 14.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/MIGRATION_TO_EXPIRING_TOKENS.md`
+  - Size: 2.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-postgresql/README.md`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/CHANGELOG.md`
+  - Size: 12.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/MIGRATION_TO_EXPIRING_TOKENS.md`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/MIGRATION_V5.md`
+  - Size: 2.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/README.md`
+  - Size: 5.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/CHANGELOG.md`
+  - Size: 10.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-redis/README.md`
+  - Size: 2.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/CHANGELOG.md`
+  - Size: 14.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/MIGRATION_TO_EXPIRING_TOKENS.md`
+  - Size: 3.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-sqlite/README.md`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-test-utils/CHANGELOG.md`
+  - Size: 9.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-test-utils/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/CHANGELOG.md`
+  - Size: 5.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/README.md`
+  - Size: 289B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage/implementing-session-storage.md`
+  - Size: 6.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/CHANGELOG.md`
+  - Size: 73.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/MIGRATION_GUIDE_V12.md`
+  - Size: 3.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/README.md`
+  - Size: 7.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/example-migration-v5-node-template-to-v6.md`
+  - Size: 31.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/billing.md`
+  - Size: 22.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/custom-store-app.md`
+  - Size: 3.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/graphql-types.md`
+  - Size: 3.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/logger.md`
+  - Size: 6.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/oauth.md`
+  - Size: 8.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/rest-resources.md`
+  - Size: 8.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/runtimes.md`
+  - Size: 2.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/session-storage.md`
+  - Size: 12.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/test-helpers.md`
+  - Size: 4.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/guides/webhooks.md`
+  - Size: 5.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v10.md`
+  - Size: 2.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v11.md`
+  - Size: 375B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v12.md`
+  - Size: 1.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v13.md`
+  - Size: 2.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v6.md`
+  - Size: 29.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v7.md`
+  - Size: 4.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v8.md`
+  - Size: 6.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/migrating-to-v9.md`
+  - Size: 5.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/README.md`
+  - Size: 2.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/README.md`
+  - Size: 3.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/begin.md`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/buildEmbeddedAppUrl.md`
+  - Size: 684B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/callback.md`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/clientcredentials.md`
+  - Size: 911B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/getEmbeddedAppUrl.md`
+  - Size: 1020B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/migrateToExpiringToken.md`
+  - Size: 4.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/nonce.md`
+  - Size: 326B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/refreshToken.md`
+  - Size: 924B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/safeCompare.md`
+  - Size: 919B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/auth/tokenExchange.md`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/README.md`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/cancel.md`
+  - Size: 1.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/check.md`
+  - Size: 5.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/create-usage-record.md`
+  - Size: 2.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/request.md`
+  - Size: 6.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/subscriptions.md`
+  - Size: 1.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/billing/update-usage-capped-amount.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/clients/Graphql.md`
+  - Size: 4.4KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/clients/README.md`
+  - Size: 1.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/clients/Rest.md`
+  - Size: 4.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/clients/Storefront.md`
+  - Size: 3.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/clients/graphqlProxy.md`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/flow/README.md`
+  - Size: 454B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/flow/validate.md`
+  - Size: 1.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/fulfillment-service/README.md`
+  - Size: 560B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/fulfillment-service/validate.md`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/session/README.md`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/session/customAppSession.md`
+  - Size: 489B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/session/decodeSessionToken.md`
+  - Size: 989B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/session/getCurrentId.md`
+  - Size: 1.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/session/getJwtSessionId.md`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/session/getOfflineId.md`
+  - Size: 942B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/shopifyApi.md`
+  - Size: 7.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/utils/README.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/utils/sanitizeHost.md`
+  - Size: 552B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/utils/sanitizeShop.md`
+  - Size: 814B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/utils/validateHmac.md`
+  - Size: 716B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/utils/versionCompatible.md`
+  - Size: 749B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/utils/versionPriorTo.md`
+  - Size: 934B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/README.md`
+  - Size: 1.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/addHandlers.md`
+  - Size: 3.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/getHandlers.md`
+  - Size: 743B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/getTopicsAdded.md`
+  - Size: 589B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/process.md`
+  - Size: 3.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/register.md`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/docs/reference/webhooks/validate.md`
+  - Size: 2.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/CHANGELOG.md`
+  - Size: 32.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/README.md`
+  - Size: 6.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/README.md`
+  - Size: 55B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/auth.md`
+  - Size: 2.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/cspHeaders.md`
+  - Size: 875B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/ensureInstalledOnShop.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/guides/managed-pricing.md`
+  - Size: 2.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/guides/token-exchange.md`
+  - Size: 2.7KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/migrating-app-v6-api-lib-to-express-lib.md`
+  - Size: 12.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/processWebhooks.md`
+  - Size: 3.3KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/redirectOutOfApp.md`
+  - Size: 1.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/redirectToShopifyOrAppRoot.md`
+  - Size: 671B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/shopifyApp.md`
+  - Size: 7.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-express/docs/reference/validateAuthenticatedSession.md`
+  - Size: 1.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/CHANGELOG.md`
+  - Size: 22.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/README.md`
+  - Size: 3.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-react-router/docs/upcoming_changes.md`
+  - Size: 2.6KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/CHANGELOG.md`
+  - Size: 58.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/LICENSE.md`
+  - Size: 1.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/README.md`
+  - Size: 10.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/docs/MIGRATION_V3.md`
+  - Size: 6.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-app-remix/docs/upcoming_changes.md`
+  - Size: 2.5KB
+  - Modified: 2026-08-26
+
+#### .py Files (4)
+
+- `__init__.py`
+  - Size: 5.2KB
+  - Modified: 2026-08-28
+- `shopify/__init__.py`
+  - Size: 6.3KB
+  - Modified: 2026-08-26
+- `shopify/clients.py`
+  - Size: 10.8KB
+  - Modified: 2026-08-26
+- `shopify/shopify_store.py`
+  - Size: 24.6KB
+  - Modified: 2026-08-28
+
+#### .toml Files (5)
+
+- `shopify/effata-picks/shopify.app.toml`
+  - Size: 1.5KB
+  - Modified: 2026-08-26
+- `shopify/effata-picks/shopify.web.toml`
+  - Size: 213B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/session-storage/shopify-app-session-storage-prisma/prisma/migrations/migration_lock.toml`
+  - Size: 122B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/adapters/cf-worker/__tests__/wrangler.toml`
+  - Size: 104B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/packages/apps/shopify-api/adapters/web-api/__tests__/wrangler.toml`
+  - Size: 102B
+  - Modified: 2026-08-26
+
+#### .yaml Files (3)
+
+- `shopify/effata-picks/pnpm-workspace.yaml`
+  - Size: 194B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/pnpm-lock.yaml`
+  - Size: 688.5KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/pnpm-workspace.yaml`
+  - Size: 99B
+  - Modified: 2026-08-26
+
+#### .yml Files (19)
+
+- `shopify/shopify-app-js/.github/dependabot.yml`
+  - Size: 2.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/api_update_reminder.yml`
+  - Size: 512B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/api_update_reminder_on_release.yml`
+  - Size: 531B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/changelog.yml`
+  - Size: 751B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/ci.yml`
+  - Size: 4.1KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/cla.yml`
+  - Size: 591B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/close-waiting-for-response-issues.yml`
+  - Size: 813B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/dependabot_auto_merge.yml`
+  - Size: 2.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/gardener-investigate-issue.yml`
+  - Size: 10.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/gardener-notify-event.yml`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/gardener-notify-slack.yml`
+  - Size: 4.9KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/main-release.yml`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/markdown_link_check.yml`
+  - Size: 763B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/publish-experimental-build.yml`
+  - Size: 1.0KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/release-candidate.yml`
+  - Size: 1.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/remove-labels-on-activity.yml`
+  - Size: 503B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/shopify-dev-preview-automation.yml`
+  - Size: 7.2KB
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/.github/workflows/stale.yml`
+  - Size: 951B
+  - Modified: 2026-08-26
+- `shopify/shopify-app-js/dev.yml`
+  - Size: 205B
+  - Modified: 2026-08-26
+
+---
+
+## Statistics
+
+- **Total Files:** 454
+- **Total Size:** 6.17MB
+- **File Types:** 9
+
+---
+
+## Neural Network Connection
+
+This agent is connected to the central neural backend:
+- **Backend Path:** `.backend/`
+- **Knowledge Graph:** Shared across all agents
+- **Agent Registry:** `.backend/agents.json`
+
+---
+
+## Purpose
+
+This AGENT.md file provides:
+1. **Folder Awareness** - Know what files exist here
+2. **Context for AI** - Help AI understand this folder's purpose
+3. **Navigation** - Quick reference for developers
+4. **Neural Link** - Connection to central knowledge graph
+
+**Note:** This file is auto-generated. Do not edit manually.
+
+---
+
+*Generated by Central Neural Ordinance System*  
+*Last scan: 2026-08-28 10:05:11*

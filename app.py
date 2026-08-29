@@ -18,9 +18,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from dotenv import load_dotenv
-from city.db import init_db, get_db, close_db, get_raw_connection
+from city.db import init_db, get_db, close_db, get_raw_connection, log_event, set_status
 from city.registry import discover_and_build, get_registry, get_agent
 from city.city_grid import layout_city, get_city_state
+from city.orchestrator import AgentConfig
 
 load_dotenv()  # loads .env into os.environ before anything uses it
 
@@ -34,6 +35,8 @@ _MUTATING_PREFIXES = (
     "/api/budget/pause",
     "/api/budget/resume",
     "/api/webcheck/",
+    "/api/agent/",
+    "/api/escalations/",
 )
 
 
@@ -59,11 +62,29 @@ def bootstrap():
     conn = get_raw_connection()
     agents = discover_and_build(conn)
     layout_city(conn, agents)
+    # Default autonomy: non-money buildings go fully autonomous; money
+    # buildings stay human_assisted so their destructive moves need approval.
+    from city.autonomy import ensure_defaults
+    ensure_defaults(agents)
     # Real cross-building interaction wiring (idempotent subscriptions).
     from city.orchestrator import EventBus
     EventBus.subscribe("finance_treasury", "social_affiliates")
     EventBus.subscribe("finance_treasury", "shopify", "shopify.order_paid")
     EventBus.subscribe("social_affiliates", "media_building", "content.published")
+    # --- NEW PIPELINE WIRE ---
+    # Stage 1 → Stage 2: supply_scout -> product_studio on lead.approved
+    EventBus.subscribe("product_studio", "supply_scout", "lead.approved")
+    # Stage 2 → Stage 3: product_studio -> storefront on listing.drafted
+    EventBus.subscribe("storefront", "product_studio", "listing.drafted")
+    # Stage 3 → Stage 4: storefront -> treasury on shopify.order_paid
+    EventBus.subscribe("treasury", "storefront", "shopify.order_paid")
+    # --- CONTROL PANEL WIRE ---
+    # Controll Panel listens to every building — it's the command center.
+    for pub in ("supply_scout", "product_studio", "storefront", "treasury",
+                "crypto_trading", "market_data", "btc_recovery", "finance_building",
+                "social_affiliates", "media_building", "sourcing_research", "scraper",
+                "signal", "web_check", "shopify", "city_hall"):
+        EventBus.subscribe("controll_panel", pub, "*")
     conn.close()
 
 
@@ -85,6 +106,8 @@ def work_tick():
         for agent in registry.values():
             try:
                 agent.conn = conn
+                if getattr(agent, "paused", False):
+                    continue
                 # If agent is paused or already over budget, skip network-capable work
                 snap = budget.snapshot(agent.name)
                 if snap.get("paused_for", 0) > 0:
@@ -92,6 +115,12 @@ def work_tick():
                 if snap.get("calls_last_min", 0) >= budget.max_per_min:
                     continue
                 agent.work()
+                # Run this building as an employee: pick up assigned goals/tasks,
+                # work its own duty pipeline, escalate what it can't decide.
+                try:
+                    agent.employee_shift()
+                except Exception as exc:
+                    print(f"[work_tick] {agent.name} employee_shift error: {exc}")
             except Exception as exc:
                 print(f"[work_tick] {agent.name} error: {exc}")
     finally:
@@ -127,7 +156,7 @@ def cog_tick(name):
     try:
         registry = get_registry(conn)
         agent = registry.get(name)
-        if agent:
+        if agent and not getattr(agent, "paused", False):
             agent.conn = conn
             agent.cognitive_tick()
     finally:
@@ -161,16 +190,20 @@ scheduler.add_job(cog_schedule_tick, "interval", seconds=15, id="cog_schedule")
 
 # --- Brain-aware Agent Runtime tick (#real autonomous runs) ---
 def runtime_tick():
-    """Run one Brain-aware runtime cycle per building (LLM only if configured)."""
-    from city import llm
-    if not llm.enabled():
-        return
+    """Run one Brain-aware runtime cycle per building.
+
+    Runs even with no LLM configured — the runtime falls back to the
+    default + read skills, so the city keeps self-driving (and logging run
+    history) whether or not a provider key is present.
+    """
     conn = get_raw_connection()
     try:
         registry = get_registry(conn)
         for agent in registry.values():
             try:
                 agent.conn = conn
+                if getattr(agent, "paused", False):
+                    continue
                 agent.runtime_run()
             except Exception as exc:
                 print(f"[runtime_tick] {agent.name} error: {exc}")
@@ -178,28 +211,79 @@ def runtime_tick():
         conn.close()
 
 
+@app.route("/api/agent/<name>/pause")
+def pause_agent(name):
+    conn = get_db()
+    agent = get_registry(conn).get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    agent.paused = True
+    AgentConfig(name).set("paused", "1", category="runtime", secret=False)
+    log_event(conn, name, "agent_paused", "Building paused — will not tick")
+    set_status(conn, name, "paused")
+    return jsonify({"ok": True, "agent": name, "paused": True})
+
+
+@app.route("/api/agent/<name>/resume")
+def resume_agent(name):
+    conn = get_db()
+    agent = get_registry(conn).get(name)
+    if not agent:
+        return jsonify({"error": f"unknown agent '{name}'"}), 404
+    agent.paused = False
+    AgentConfig(name).set("paused", "0", category="runtime", secret=False)
+    log_event(conn, name, "agent_resumed", "Building resumed — will tick again")
+    set_status(conn, name, "idle")
+    return jsonify({"ok": True, "agent": name, "paused": False})
+
+
+@app.route("/api/agents")
+def api_agents_status():
+    conn = get_db()
+    registry = get_registry(conn)
+    paused_rows = conn.execute(
+        "SELECT agent_name, value FROM agent_config WHERE key = 'paused'"
+    ).fetchall()
+    paused_set = {r["agent_name"] for r in paused_rows if str(r["value"]).strip() == "1"}
+    result = []
+    for name, agent in registry.items():
+        result.append({
+            "name": name,
+            "subject": agent.subject,
+            "paused": name in paused_set or getattr(agent, "paused", False),
+            "status": agent.status,
+            "autonomy": agent.autonomy_level() if callable(agent.autonomy_level) else agent.autonomy_level,
+        })
+    return jsonify(result)
+
+
 scheduler.add_job(runtime_tick, "interval", seconds=180, id="runtime_tick")
 
 atexit.register(lambda: scheduler.shutdown(wait=False))
 
 # Buildings register their own scheduled jobs (self-contained).
-from buildings.shopify import register_scheduler as _register_shopify_scheduler
+from buildings.storefront.shopify import register_scheduler as _register_shopify_scheduler
 _register_shopify_scheduler(scheduler)
 
 # Buildings own their own HTTP routes (self-contained).
-from buildings.shopify import shopify_bp
+from buildings.storefront.shopify import shopify_bp
 app.register_blueprint(shopify_bp, url_prefix="/api/shopify")
 
 
 # --- Views ---
 @app.route("/")
 def index():
-    return render_template("city.html")
+    return render_template("home.html")
 
 
 @app.route("/operator")
 def operator_view():
     return render_template("operator.html")
+
+
+@app.route("/manager")
+def manager_view():
+    return render_template("manager.html")
 
 
 @app.route("/health")
@@ -240,6 +324,7 @@ def api_agent_detail(name):
             "subject": agent.subject,
             "district": agent.district,
             "autonomy": safe(agent.autonomy_level),
+            "paused": getattr(agent, "paused", False),
             "skills": skills,
             "report": safe(agent.report),
             "recent_events": safe(agent.recent_events, 20),
@@ -452,10 +537,9 @@ def api_building_dashboard(name):
 
     elif name == "media_building":
         try:
-            for dept in ["content_creation", "content_automation", "content_analytics"]:
-                d = registry.get(dept)
-                if d and hasattr(d, "report"):
-                    payload[dept] = d.report()
+            d = registry.get("social_affiliates")
+            if d and hasattr(d, "report"):
+                payload["social_affiliates"] = d.report()
         except Exception:
             pass
 
@@ -464,9 +548,24 @@ def api_building_dashboard(name):
             d = registry.get("sourcing_research")
             if d and hasattr(d, "report"):
                 payload["sourcing_research"] = d.report()
-            sd = registry.get("scraper")
-            if sd and hasattr(sd, "report"):
-                payload["scraper"] = sd.report()
+            wc = registry.get("web_check")
+            if wc and hasattr(wc, "report"):
+                payload["web_check"] = wc.report()
+            ss = registry.get("supply_scout")
+            if ss and hasattr(ss, "report"):
+                payload["supply_scout"] = ss.report()
+            pf = registry.get("product_flipping")
+            if pf and hasattr(pf, "report"):
+                payload["product_flipping"] = pf.report()
+            sig = registry.get("signal")
+            if sig and hasattr(sig, "report"):
+                payload["signal"] = sig.report()
+        except Exception:
+            pass
+
+    elif name == "neural_index":
+        try:
+            payload.update(agent.dashboard_payload(agent.conn))
         except Exception:
             pass
 
@@ -479,6 +578,12 @@ def api_building_dashboard(name):
             payload["results_list"] = [dict(r) for r in results]
         except Exception:
             payload["results_list"] = []
+
+    elif name == "controll_panel":
+        try:
+            payload.update(agent.dashboard_payload(agent.conn))
+        except Exception:
+            pass
 
     return jsonify(payload)
 
@@ -828,6 +933,151 @@ def api_budget_resume():
         return jsonify({"error": "missing agent"}), 400
     budget.resume(agent)
     return jsonify({"ok": True, "agent": agent, "resumed": True})
+
+
+# --- Employee escalations (things an agent cannot safely decide alone) ---
+@app.route("/api/escalations")
+def api_escalations():
+    """List employee escalations (open only unless ?all=1). Filter by ?agent=."""
+    from city.db import get_raw_connection, list_escalations, count_open_escalations
+    conn = get_raw_connection()
+    agent = request.args.get("agent")
+    open_only = not request.args.get("all")
+    return jsonify({
+        "open_count": count_open_escalations(conn),
+        "escalations": list_escalations(conn, agent_name=agent, open_only=open_only),
+    })
+
+
+@app.route("/api/escalations/<int:esc_id>/resolve", methods=["POST"])
+def api_escalation_resolve(esc_id):
+    """Mark an escalation resolved (the boss handled it)."""
+    from city.db import get_raw_connection, resolve_escalation
+    data = request.get_json(force=True, silent=True) or {}
+    conn = get_raw_connection()
+    ok = resolve_escalation(conn, esc_id, data.get("resolution", ""))
+    if not ok:
+        return jsonify({"error": "escalation not found"}), 404
+    return jsonify({"ok": True, "esc_id": esc_id})
+
+
+# --- Boss controls: autonomy, assign work, trigger a shift ---
+@app.route("/api/agent/<name>/autonomy", methods=["POST"])
+def api_agent_autonomy(name):
+    """Set a building's autonomy level (human_led | human_assisted | autonomous)."""
+    from city.registry import get_registry
+    conn = get_db()
+    agent = get_registry(conn).get(name)
+    if not agent:
+        return jsonify({"error": f"no agent named {name}"}), 404
+    data = request.get_json(force=True, silent=True) or {}
+    level = (data.get("level") or "").strip()
+    if level not in ("human_led", "human_assisted", "autonomous"):
+        return jsonify({"error": "level must be human_led|human_assisted|autonomous"}), 400
+    agent.conn = conn
+    ok = agent.set_autonomy(level)
+    if not ok:
+        return jsonify({"error": "failed to set autonomy"}), 400
+    return jsonify({"ok": True, "agent": name, "autonomy": level})
+
+
+@app.route("/api/agent/<name>/assign", methods=["POST"])
+def api_agent_assign(name):
+    """Give a building an assigned goal/task (with an optional auto-command) that
+    its employee loop will pick up and execute on the next shift."""
+    from city.registry import get_registry
+    from city.orchestrator import GoalTracker
+    conn = get_db()
+    if not get_registry(conn).get(name):
+        return jsonify({"error": f"no agent named {name}"}), 404
+    data = request.get_json(force=True, silent=True) or {}
+    title = (data.get("title") or "").strip()
+    command = (data.get("command") or "").strip()
+    if not title:
+        return jsonify({"error": "title is required"}), 400
+    goal_id = GoalTracker.create_goal(name, title)
+    GoalTracker.add_task(goal_id, title, auto_command=command)
+    return jsonify({"ok": True, "agent": name, "goal_id": goal_id,
+                     "title": title, "auto_command": command,
+                     "note": "employee will execute on its next shift"})
+
+
+@app.route("/api/agent/<name>/shift", methods=["POST"])
+def api_agent_shift(name):
+    """Trigger one employee shift for a building right now."""
+    from city.registry import get_registry
+    conn = get_db()
+    agent = get_registry(conn).get(name)
+    if not agent:
+        return jsonify({"error": f"no agent named {name}"}), 404
+    agent.conn = conn
+    return jsonify(agent.employee_shift())
+
+
+@app.route("/api/manager")
+def api_manager():
+    """Consolidated payload for the manager dashboard: every agent's role +
+    autonomy, open escalations, pending approvals, treasury + recent activity."""
+    from city.registry import get_registry
+    from city.db import (get_raw_connection, list_escalations,
+                         count_open_escalations)
+    from city.orchestrator import GoalTracker
+    # Departments that fold INTO their parent building — they are not separate
+    # team members. Media's creation/automation/analytics live under ONE building.
+    _FOLDED_DEPTS = {
+        "content_creation", "content_automation", "content_analytics",
+    }
+    conn = get_raw_connection()
+    reg = get_registry(conn)
+    agents = []
+    for name, agent in reg.items():
+        if name in _FOLDED_DEPTS:
+            continue
+        goals = GoalTracker.get_goals(name)
+        pending_tasks = sum(
+            1 for g in goals for t in g.get("tasks", [])
+            if t.get("status") == "pending"
+        )
+        me = conn.execute(
+            "SELECT status FROM agents WHERE name=?", (name,)).fetchone()
+        agents.append({
+            "name": name,
+            "subject": getattr(agent, "subject", ""),
+            "job_title": getattr(agent, "job_title", "Worker"),
+            "mission": getattr(agent, "mission", ""),
+            "autonomy": agent.autonomy_level(),
+            "status": dict(me).get("status", "idle") if me else "idle",
+            "skills": len(getattr(agent, "skills", []) or []),
+            "routine_tasks": len(getattr(agent, "routine_commands", []) or []),
+            "pending_tasks": pending_tasks,
+        })
+    # Pending Shopify approvals (agent_actions)
+    pend_approvals = []
+    try:
+        pend_approvals = [dict(r) for r in conn.execute(
+            "SELECT id, tool_name, created_at, reasoning FROM agent_actions "
+            "WHERE status='pending' ORDER BY id DESC LIMIT 20")]
+    except Exception:
+        pass
+    # Treasury
+    treasury = 0
+    try:
+        f = reg.get("finance_treasury")
+        if f:
+            f.conn = conn
+            treasury = (f._aggregate() or {}).get("grand_total_usd", 0) or 0
+    except Exception:
+        pass
+    return jsonify({
+        "agents": agents,
+        "open_escalations": count_open_escalations(conn),
+        "escalations": list_escalations(conn, open_only=True),
+        "pending_approvals": pend_approvals,
+        "treasury": round(treasury, 2),
+        "recent_events": [dict(r) for r in conn.execute(
+            "SELECT agent_name, timestamp, type, message FROM events "
+            "ORDER BY id DESC LIMIT 25")],
+    })
 
 
 if __name__ == "__main__":

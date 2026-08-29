@@ -19,16 +19,19 @@ const WELCOME_INTROS = {
   shopify: "I track store orders, revenue, and profit.",
   product_flipping: "I manage flip inventory — source, list, sell.",
   social_affiliates: "I run affiliate campaigns across platforms.",
-  content_creation: "Content pipeline: idea -> draft -> publish.",
-  content_automation: "AI video generation via Kling, Pika, Runway, HeyGen.",
-  content_analytics: "Viral intelligence and ROI analysis.",
   sourcing_research: "I score product opportunities.",
-  research_building: "Research Quarter. Select sourcing_research.",
-  media_building: "Media District. Select content departments.",
-  btc_recovery: "I scan recovery artifacts for on-chain BTC. tools / inventory / hunt / ingest available.",
   signal: "I watch web pages for changes, drops, and alerts.",
-  scraper: "I fetch any URL with anti-bot bypass, parse to markdown.",
-  web_check: "OSINT website analyzer. Start the service, scan URLs, open the room.",
+  supply_scout: "Department of research_building — I find and score product opportunities. Departments report here.",
+  product_studio: "Product Studio — turn approved leads into listings.",
+  storefront: "Commerce District — publish products, take orders, fulfill.",
+  treasury: "I track the real money ledger.",
+  research_building: "Research Quarter. Select sourcing_research.",
+  media_building: "Media District — social_affiliates reports here.",
+  controll_panel: "🖥️ Command Center — I monitor every route and building in the city. Click 'Interior' to see the 3D command room with avatar stations.",
+  btc_recovery: "I scan recovery artifacts for on-chain BTC. tools / inventory / hunt / ingest available.",
+  scraper: "Department of supply_scout — I fetch any URL with anti-bot bypass, parse to markdown.",
+  web_check: "Department of research_building — OSINT website analyzer. Start the service, scan URLs, open the room.",
+  neural_index: "Department of controll_panel — I index the codebase and auto-generate AGENT.md files for every folder.",
 };
 
 const COMMANDS = {
@@ -36,6 +39,8 @@ const COMMANDS = {
     { label: 'Hold Meeting', cmd: 'meeting', desc: 'Run daily standup' },
     { label: 'City Status', cmd: 'city status', desc: 'Overview of all buildings' },
     { label: 'Departments', cmd: 'departments', desc: 'List all agents' },
+    { label: 'Pause All', cmd: '__pause_all:', desc: 'Pause all buildings' },
+    { label: 'Resume All', cmd: '__resume_all:', desc: 'Resume all buildings' },
   ],
   crypto_trading: [
     { label: 'Buy BTC @ 65k', cmd: 'buy BTC @ 65000', desc: 'Open long' },
@@ -76,26 +81,6 @@ const COMMANDS = {
     { label: 'Click', cmd: 'click "my offer"', desc: 'Record click' },
     { label: 'Convert', cmd: 'convert "my offer" revenue 100.00', desc: 'Record conversion' },
   ],
-  content_creation: [
-    { label: 'Queue', cmd: 'queue', desc: 'Pipeline view' },
-    { label: 'New Idea', cmd: 'idea "my title" for youtube', desc: 'Add idea' },
-    { label: 'Draft', cmd: 'draft "my title"', desc: 'Move to draft' },
-    { label: 'Publish', cmd: 'publish "my title"', desc: 'Publish content' },
-  ],
-  content_automation: [
-    { label: 'Queue Status', cmd: 'queue status', desc: 'Pending jobs' },
-    { label: 'Budget', cmd: 'budget', desc: 'Show limits' },
-    { label: 'Providers', cmd: 'providers', desc: 'Available AI video providers' },
-    { label: 'Process Queue', cmd: 'process queue', desc: 'Run pending' },
-    { label: 'Stats', cmd: 'stats', desc: 'Generation stats' },
-  ],
-  content_analytics: [
-    { label: 'Analyze Strategy', cmd: 'analyze strategy', desc: 'Full analysis' },
-    { label: 'Viral Insights', cmd: 'viral insights', desc: 'Trending patterns' },
-    { label: 'Trending 10', cmd: 'trending videos 10', desc: 'Hot videos' },
-    { label: 'ROI 7 Days', cmd: 'roi analysis 7', desc: 'Return on investment' },
-    { label: 'Budget Alerts', cmd: 'budget alerts', desc: 'Overspend warnings' },
-  ],
   sourcing_research: [
     { label: 'Top Leads', cmd: 'top leads', desc: 'Highest scored' },
     { label: 'New Lead', cmd: 'lead "product" category electronics score 8.5', desc: 'Add opportunity' },
@@ -114,6 +99,26 @@ const COMMANDS = {
     { label: 'Ingest Folder', cmd: 'ingest /path', desc: 'Ingest via bot v2', prompt: 'Folder to ingest', template: 'ingest {value}' },
     { label: 'Import All', cmd: 'import all /path', desc: 'Import wallets/keys', prompt: 'Folder path', template: 'import all {value}' },
     { label: 'Start Scan', cmd: 'scan', desc: 'Start chain monitor' },
+    { label: 'Pause Building', cmd: '__pause:btc_recovery', desc: 'Stop this building from ticking' },
+  ],
+  supply_scout: [
+    { label: 'Enter Scraper', cmd: '__enter:scraper', desc: 'Enter web scraper department' },
+    { label: 'Queue', cmd: 'queue', desc: 'Lead queue' },
+    { label: 'Stats', cmd: 'stats', desc: 'Sourcing metrics' },
+  ],
+  product_studio: [
+    { label: 'Enter Flipping', cmd: '__enter:product_flipping', desc: 'Enter product_flipping department' },
+    { label: 'Queue Status', cmd: 'queue status', desc: 'Listing pipeline' },
+    { label: 'Stats', cmd: 'stats', desc: 'Studio metrics' },
+  ],
+  storefront: [
+    { label: 'Enter Shopify', cmd: '__enter:shopify', desc: 'Enter shopify department' },
+    { label: 'Revenue', cmd: 'revenue', desc: 'Total revenue' },
+    { label: 'Top Products', cmd: 'top products', desc: 'Best sellers' },
+  ],
+  treasury: [
+    { label: 'Ledger', cmd: 'ledger', desc: 'All entries' },
+    { label: 'Summary', cmd: 'summary', desc: 'Totals' },
   ],
   signal: [
     { label: 'Watches', cmd: 'watches', desc: 'All monitored pages' },
@@ -139,21 +144,39 @@ const COMMANDS = {
   research_building: [
     { label: 'Building Status', cmd: 'status', desc: 'Research hub report' },
     { label: 'Departments', cmd: 'departments', desc: 'List depts' },
-    { label: 'Open Sourcing', cmd: '__open:sourcing_research', desc: 'Open sourcing_research window' },
-    { label: 'Open Web-Check', cmd: '__open:web_check', desc: 'Open web_check room agent' },
+    { label: 'Enter Supply Scout', cmd: '__enter:supply_scout', desc: 'Enter supply_scout' },
+    { label: 'Enter Sourcing', cmd: '__enter:sourcing_research', desc: 'Enter sourcing_research' },
+    { label: 'Enter Flipping', cmd: '__enter:product_flipping', desc: 'Enter product_flipping' },
+    { label: 'Enter Web-Check', cmd: '__enter:web_check', desc: 'Enter web_check' },
+    { label: 'Enter Signal', cmd: '__enter:signal', desc: 'Enter signal' },
   ],
   media_building: [
-    { label: 'Status', cmd: 'status', desc: 'Media hub' },
-    { label: 'Open Content', cmd: '__open:content_creation', desc: 'Content creation' },
-    { label: 'Open Automation', cmd: '__open:content_automation', desc: 'Content automation' },
-    { label: 'Open Analytics', cmd: '__open:content_analytics', desc: 'Content analytics' },
+    { label: 'Status', cmd: 'status', desc: 'Media hub report' },
+    { label: 'Enter Affiliates', cmd: '__enter:social_affiliates', desc: 'Enter social_affiliates' },
+    { label: 'Campaign TikTok', cmd: 'campaign tiktok "my offer"', desc: 'New campaign' },
+    { label: 'Viral Insights', cmd: 'viral insights', desc: 'ROI analysis' },
+  ],
+  controll_panel: [
+    { label: 'Enter Command Room', cmd: '__enter:controll_panel', desc: '3D command room with avatar stations' },
+    { label: 'Routes', cmd: 'routes', desc: 'Pipeline routes + health' },
+    { label: 'Subscriptions', cmd: 'subscriptions', desc: 'EventBus wiring' },
+    { label: 'Metrics', cmd: 'metrics', desc: 'System-wide metrics' },
+    { label: 'Alerts', cmd: 'alerts', desc: 'Open system alerts' },
+    { label: 'Status', cmd: 'status', desc: 'Command center status' },
+  ],
+  neural_index: [
+    { label: 'Scan', cmd: 'scan', desc: 'Index all files' },
+    { label: 'Regenerate', cmd: 'regenerate', desc: 'Rebuild all AGENT.md' },
+    { label: 'Stats', cmd: 'stats', desc: 'Index statistics' },
+    { label: 'Agents', cmd: 'agents', desc: 'List generated folder agents' },
+    { label: 'Query', cmd: 'query Virtual City', desc: 'Search knowledge graph' },
   ],
   finance_building: [
     { label: 'Aggregate', cmd: 'aggregate', desc: 'Combined report' },
-    { label: 'Open Trading', cmd: '__open:crypto_trading', desc: 'Crypto trading' },
-    { label: 'Open BTC Recovery', cmd: '__open:btc_recovery', desc: 'BTC recovery' },
-    { label: 'Open Market Data', cmd: '__open:market_data', desc: 'Market data' },
-    { label: 'Open Treasury', cmd: '__open:finance_treasury', desc: 'Treasury' },
+    { label: 'Enter Trading', cmd: '__enter:crypto_trading', desc: 'Enter crypto_trading' },
+    { label: 'Enter BTC Recovery', cmd: '__enter:btc_recovery', desc: 'Enter BTC recovery' },
+    { label: 'Enter Market Data', cmd: '__enter:market_data', desc: 'Enter market data' },
+    { label: 'Enter Treasury', cmd: '__enter:finance_treasury', desc: 'Enter treasury' },
   ],
 };
 
@@ -184,7 +207,7 @@ function renderGrid() {
       <div class="name">${escText(b.name)}</div>
       <div class="subject">${escText(b.subject || '')}</div>
       <div class="district">${escText(b.district || '')}</div>
-      <div class="status-dot ${b.status || 'idle'}"></div>
+      <div class="status-dot ${b.paused ? 'paused' : (b.status || 'idle')}"></div>
       <div class="stat-line">${b.activity_count || 0} events</div>
       ${depts}
       <div class="click-hint">click to interact</div>
@@ -213,7 +236,7 @@ function updateCard(name) {
       cards[i].classList.toggle('is-open', openWindows.has(name));
       cards[i].querySelector('.stat-line').textContent = (b.activity_count || 0) + ' events';
       const dot = cards[i].querySelector('.status-dot');
-      if (dot) dot.className = 'status-dot ' + (b.status || 'idle');
+      if (dot) dot.className = 'status-dot ' + (b.paused ? 'paused' : (b.status || 'idle'));
       const ind = cards[i].querySelector('.window-indicator');
       if (ind) ind.className = 'window-indicator' + (openWindows.has(name) ? ' open' : '');
       break;
@@ -280,10 +303,11 @@ function openWindow(name) {
   // Tabs
   const tabs = document.createElement('div');
   tabs.className = 'win-tabs';
+  const hasInterior = true; // All buildings are enterable
   tabs.innerHTML = `
     <button class="win-tab active" data-pane="chat">Chat</button>
     <button class="win-tab" data-pane="plan">Plan</button>
-    <button class="win-tab" data-pane="monitor">Monitor</button>
+    <button class="win-tab" data-pane="monitor">Monitor</button>${hasInterior ? '<button class="win-tab" data-pane="interior">Interior</button>' : ''}
   `;
   win.appendChild(tabs);
 
@@ -331,6 +355,21 @@ function openWindow(name) {
   monitorPane.innerHTML = `<div class="win-monitor"><p class="hint">Loading monitor...</p></div>`;
   body.appendChild(monitorPane);
 
+  // Interior pane — all buildings can be entered
+  let interiorPane = null;
+  if (hasInterior) {
+    interiorPane = document.createElement('div');
+    interiorPane.className = 'win-pane';
+    interiorPane.dataset.pane = 'interior';
+    if (name === 'controll_panel') {
+      interiorPane.innerHTML = '<div class="win-interior"><canvas id="control-room-canvas"></canvas></div>';
+    } else {
+      const roomName = b.subject || name;
+      interiorPane.innerHTML = '<div class="win-interior"><div class="interior-room"><div class="room-floor"><div class="dash-display"><div class="dash-placeholder">Entering ' + roomName + '...</div></div></div></div></div>';
+    }
+    body.appendChild(interiorPane);
+  }
+
   win.appendChild(body);
   container.appendChild(win);
 
@@ -346,6 +385,13 @@ function openWindow(name) {
       if (pane) pane.classList.add('active');
       if (tab.dataset.pane === 'plan') loadPlan(state);
       if (tab.dataset.pane === 'monitor') loadMonitor(state);
+      if (tab.dataset.pane === 'interior') {
+        if (state.name === 'controll_panel') {
+          initControlRoom(state);
+        } else {
+          loadInterior(state);
+        }
+      }
       if (tab.dataset.pane === 'chat') {
         const inp = body.querySelector('.win-chat-input input');
         if (inp) setTimeout(() => inp.focus(), 50);
@@ -457,6 +503,12 @@ function openWindow(name) {
 function closeWindow(state) {
   if (state.monitorInterval) clearInterval(state.monitorInterval);
   if (state.traceInterval) clearInterval(state.traceInterval);
+  if (state.controlRoomInterval) clearInterval(state.controlRoomInterval);
+  if (state.interiorInterval) clearInterval(state.interiorInterval);
+  if (window.ControlRoom && window.ControlRoom.isReady()) {
+    window.ControlRoom.cleanup();
+    controlRoomReady = false;
+  }
   if (state.el.parentNode) state.el.parentNode.removeChild(state.el);
   openWindows.delete(state.name);
   updateCard(state.name);
@@ -506,6 +558,75 @@ function runAgentCommand(state, cmd) {
   // Special: open external room
   if (cmd.startsWith('__url:')) {
     window.open(cmd.slice(6), '_blank', 'noopener');
+    return;
+  }
+  // Special: open interior view for any building
+  if (cmd.startsWith('__enter:') || cmd.startsWith('__interior:')) {
+    const target = (cmd.startsWith('__enter:') ? cmd.slice(9) : cmd.slice(11)).trim();
+    const targetState = openWindows.get(target);
+    if (targetState) {
+      // Switch to interior tab of the existing window
+      const tabs = targetState.el.querySelectorAll('.win-tab');
+      const interiorTab = Array.from(tabs).find(t => t.dataset.pane === 'interior');
+      if (interiorTab) {
+        interiorTab.click();
+        // Bring window to front
+        targetState.el.style.zIndex = ++windowZ;
+        if (targetState.el.classList.contains('minimized')) {
+          targetState.el.classList.remove('minimized');
+        }
+      }
+    } else if (buildingMap[target]) {
+      // Open the window then switch to interior
+      openWindow(target);
+      setTimeout(() => {
+        const ws = openWindows.get(target);
+        if (ws) {
+          const interiorTab = ws.el.querySelector('.win-tab[data-pane="interior"]');
+          if (interiorTab) interiorTab.click();
+        }
+      }, 50);
+    } else if (DEPARTMENTS && DEPARTMENTS[target]) {
+      // Department not on grid — register it as a virtual building first
+      registerDepartment(target);
+      setTimeout(() => {
+        const ws = openWindows.get(target);
+        if (ws) {
+          const interiorTab = ws.el.querySelector('.win-tab[data-pane="interior"]');
+          if (interiorTab) interiorTab.click();
+        }
+      }, 50);
+    } else {
+      const msgContainer = state.el.querySelector('.win-chat-messages');
+      appendChatMsg(msgContainer, 'error', 'Building not found: ' + target, new Date().toLocaleTimeString());
+    }
+    return;
+  }
+
+  // Special: pause/resume a building
+  if (cmd.startsWith('__pause:') || cmd.startsWith('__resume:') || cmd === '__pause_all:' || cmd === '__resume_all:') {
+    const names = cmd === '__pause_all:'
+      ? Object.keys(buildingMap)
+      : cmd === '__resume_all:'
+        ? Object.keys(buildingMap)
+        : [cmd.startsWith('__pause:') ? cmd.slice(8) : cmd.slice(10)];
+    const action = cmd === '__resume_all:' || cmd.startsWith('__resume:') ? 'resume' : 'pause';
+    if (!names.length) {
+      appendChatMsg(state.el.querySelector('.win-chat-messages'), 'agent', 'No buildings on map to ' + action, now);
+      return;
+    }
+    names.forEach(n => {
+      fetch('/api/agent/' + encodeURIComponent(n) + '/' + action)
+        .then(r => r.json())
+        .then(d => {
+          const mc = state.el.querySelector('.win-chat-messages');
+          appendChatMsg(mc, 'agent', (d.paused ? 'Paused' : 'Resumed') + ' ' + n, new Date().toLocaleTimeString());
+          if (buildingMap[n]) {
+            buildingMap[n].userData.paused = d.paused;
+          }
+        })
+        .catch(() => {});
+    });
     return;
   }
 
@@ -622,6 +743,36 @@ function loadPlan(state) {
     .catch(() => {});
 }
 
+// ===================== INTERIOR (3D command room) =====================
+let controlRoomReady = false;
+function initControlRoom(state) {
+  if (!window.ControlRoom) {
+    console.warn('[control_room] ControlRoom module not loaded');
+    return;
+  }
+  if (controlRoomReady) {
+    // Refresh avatar statuses from live building data
+    const buildings = Object.values(buildingMap);
+    buildings.forEach(b => {
+      window.ControlRoom.updateStatus(b.name, b.status || 'idle');
+    });
+    window.ControlRoom.resize();
+    return;
+  }
+  const buildings = Object.values(buildingMap).map(b => b.name);
+  window.ControlRoom.init(buildings);
+  controlRoomReady = true;
+
+  // Periodic status refresh
+  state.controlRoomInterval = setInterval(() => {
+    if (document.body.contains(state.el) && state.el.querySelector('.win-pane[data-pane="interior"].active') && window.ControlRoom) {
+      Object.values(buildingMap).forEach(b => {
+        window.ControlRoom.updateStatus(b.name, b.status || 'idle');
+      });
+    }
+  }, 2000);
+}
+
 // ===================== MONITOR =====================
 function loadMonitor(state) {
   fetch('/api/building/' + encodeURIComponent(state.name) + '/dashboard')
@@ -655,8 +806,49 @@ function refreshTraceFeed(state) {
     .catch(() => {});
 }
 
+// ===================== INTERIOR =====================
+let interiorReady = {};
+
+function loadInterior(state) {
+  const pane = state.el.querySelector('.win-pane[data-pane="interior"]');
+  if (!pane) return;
+  const display = pane.querySelector('.dash-display');
+  if (!display) return;
+
+  // Mark as loading
+  if (!interiorReady[state.name]) {
+    display.innerHTML = '<div class="dash-placeholder">Loading interior...</div>';
+  }
+
+  fetch('/api/building/' + encodeURIComponent(state.name) + '/dashboard')
+    .then(r => r.json())
+    .then(data => {
+      if (!interiorReady[state.name]) {
+        interiorReady[state.name] = true;
+      }
+      // Render the dashboard inside the room
+      const html = dash(state.name, data);
+      display.innerHTML = html;
+
+      // Set up auto-refresh while interior tab is active
+      if (!state.interiorInterval) {
+        state.interiorInterval = setInterval(() => {
+          if (document.body.contains(state.el) &&
+              state.el.querySelector('.win-pane[data-pane="interior"].active') &&
+              !document.hidden) {
+            loadInterior(state);
+          }
+        }, 5000);
+      }
+    })
+    .catch(() => {
+      display.innerHTML = '<div class="dash-placeholder">Interior unavailable</div>';
+    });
+}
+
 // ===================== SSE =====================
-function updateCity(buildings) {
+function updateCity(data) {
+  const buildings = data.buildings || data;
   if (!buildings || !buildings.length) return;
   const firstLoad = Object.keys(buildingMap).length === 0;
   for (const b of buildings) {
@@ -664,10 +856,36 @@ function updateCity(buildings) {
   }
   renderGrid();
 
+  // Store departments map for __enter: lookups
+  if (data.departments) {
+    DEPARTMENTS = data.departments;
+  }
   // Update cards only — do NOT re-hit dashboards on every SSE tick
   for (const [name] of openWindows) {
     updateCard(name);
   }
+}
+
+// Register a department as a virtual building so it can be opened via __enter:
+let DEPARTMENTS = {};
+function registerDepartment(name) {
+  if (buildingMap[name]) return; // already registered
+  const parent = DEPARTMENTS[name];
+  if (parent && !buildingMap[parent]) {
+    registerDepartment(parent); // recursively register parent first
+  }
+  const parentB = parent ? buildingMap[parent] : null;
+  buildingMap[name] = {
+    name: name,
+    subject: name,
+    district: parent ? (parentB ? parentB.district : 'department') : 'department',
+    color: parentB ? parentB.color : '#607d8b',
+    status: 'idle',
+    activity_count: 0,
+    departments: [],
+    x: parentB ? parentB.x + 60 : 200,
+    y: parentB ? parentB.y + 60 : 200,
+  };
 }
 
 function connectStream() {

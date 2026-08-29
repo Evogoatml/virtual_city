@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIRTUAL CITY // MANAGER</title>
+<style>
+  :root{
+    --bg:#0a0c14; --panel:#11141f; --panel2:#161b29; --line:#222a3d;
+    --txt:#c7d2e0; --dim:#7c8aa3; --accent:#39ff14; --accent2:#22d3ee;
+    --warn:#ffb020; --bad:#ff5470; --good:#39ff14;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#05070d;color:var(--txt);font-family:var(--mono);font-size:13px}
+  a{color:var(--accent2);text-decoration:none}
+  header{display:flex;align-items:center;gap:.9rem;padding:.6rem .9rem;background:rgba(8,10,16,.9);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  header h1{font-size:14px;letter-spacing:2px;color:var(--accent);margin:0}
+  header nav a{margin-right:.8rem;font-size:11px}
+  .pill{font-size:11px;padding:.2rem .55rem;border:1px solid var(--line);border-radius:999px;color:var(--dim)}
+  .pill.live{color:var(--accent);border-color:var(--accent)}
+  .pill.dead{color:var(--bad);border-color:var(--bad)}
+  .sp{flex:1}
+  main{display:grid;grid-template-columns:minmax(380px,1fr) 340px;gap:.8rem;padding:.8rem;align-items:start}
+  .col{display:flex;flex-direction:column;gap:.8rem}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.7rem}
+  .h{font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin:0 0 .5rem}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:.35rem .4rem;border-bottom:1px solid #1a2030;vertical-align:top;font-size:12px}
+  th{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+  .dim{color:var(--dim)}
+  .note{color:var(--dim);font-size:10px}
+  .role{color:var(--accent2);font-weight:600}
+  .sev-info{color:var(--accent2)} .sev-warn{color:var(--warn)} .sev-error{color:var(--bad)}
+  .stat{display:inline-block;min-width:2rem;text-align:center;border-radius:3px;padding:.1rem .3rem;font-size:10px}
+  .stat.idle{color:var(--good);border:1px solid var(--good)}
+  .stat.working{color:var(--warn);border:1px solid var(--warn)}
+  .stat.error,.stat.stopped{color:var(--bad);border:1px solid var(--bad)}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:4px;
+    padding:.25rem .5rem;cursor:pointer;font-family:var(--mono);font-size:11px}
+  button:hover{border-color:var(--accent)}
+  button.go{border-color:var(--accent);color:var(--accent)}
+  button.danger{border-color:var(--bad);color:var(--bad)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  select,input{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:4px;
+    padding:.28rem .4rem;font-family:var(--mono);font-size:11px}
+  .auth-select{max-width:130px}
+  .actions{display:flex;gap:.3rem;flex-wrap:wrap;align-items:center}
+  .esc{border-left:2px solid var(--line);padding:.3rem .5rem;margin:.3rem 0;background:var(--panel2);border-radius:4px}
+  .esc .det{color:var(--dim);font-size:11px;margin-top:.15rem}
+  .feed{max-height:340px;overflow:auto}
+  .feed div{padding:.22rem 0;border-bottom:1px dashed #1a2030;font-size:11px}
+  .money{font-size:24px;font-weight:700;color:var(--accent)}
+  .mlabel{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px}
+  .kv{display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-size:11px;border-bottom:1px solid #1a2030}
+  .assign-form{display:none;margin-top:.5rem;padding:.5rem;background:var(--panel2);border:1px solid var(--line);border-radius:5px}
+  .assign-form.open{display:block}
+  .assign-form input{width:100%;margin:.2rem 0}
+  .toast{position:fixed;bottom:1rem;right:1rem;background:var(--panel2);border:1px solid var(--accent);
+    color:var(--accent);padding:.5rem .7rem;border-radius:5px;font-size:11px;z-index:9;display:none}
+  .empty{color:var(--dim);font-style:italic;padding:.4rem}
+</style>
+</head>
+<body>
+<body>
+<header>
+  <h1>▮ MANAGER</h1>
+  <nav><a href="/">City</a><a href="/operator">Operator</a><a href="/manager">Manager</a></nav>
+  <span class="pill" id="conn">connecting…</span>
+  <span class="pill" id="escpill">0 open escalations</span>
+  <span class="sp"></span>
+  <div class="money" id="treasury">$0</div>
+  <div class="mlabel">treasury</div>
+  <input id="apikey" placeholder="API key (if set)" style="max-width:120px">
+</header>
+
+<main>
+  <div class="col">
+    <div class="card">
+      <div class="h">⚑ Inbox — escalations needing you</div>
+      <div id="escalations"><div class="empty">loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="h">Team — your options</div>
+      <table>
+        <thead><tr><th>Employee</th><th>Status</th><th>Autonomy</th><th>Skills</th><th>Queued</th><th>Controls</th></tr></thead>
+        <tbody id="team"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <div class="h">At a glance</div>
+      <div class="kv"><span>Open escalations</span><span id="g_esc" class="emph">0</span></div>
+      <div class="kv"><span>Pending approvals (Shopify)</span><span id="g_ap">0</span></div>
+      <div class="kv"><span>Treasury</span><span id="g_tres">$0</span></div>
+    </div>
+    <div class="card">
+      <div class="h">Approvals — store actions</div>
+      <div id="approvals"><div class="empty">none</div></div>
+    </div>
+    <div class="card">
+      <div class="h">Live activity</div>
+      <div class="feed" id="feed"><div class="empty">waiting for events…</div></div>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast">ok</div>
+<script>
+const $=s=>document.querySelector(s);
+function apiHeaders(){
+  const k=$('#apikey').value.trim();
+  const h={'Content-Type':'application/json'};
+  if(k) h['X-City-Api-Key']=k;
+  return h;
+}
+async function api(path,opts){
+  opts=opts||{}; opts.headers=apiHeaders();
+  const r=await fetch(path,opts);
+  if(!r.ok){ let m=path+' -> HTTP '+r.status; try{ m=(await r.json()).error||m; }catch(e){} throw new Error(m); }
+  try{ return await r.json(); }catch(e){ throw new Error(path+' bad json'); }
+}
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); }
+function sevCls(s){ return s==='error'?'sev-error':s==='warn'?'sev-warn':'sev-info'; }
+
+function renderAgents(d){
+  const tb=$('#team'); tb.innerHTML='';
+  (d.agents||[]).forEach(a=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div class="role">${a.job_title||a.name}</div><div class="dim" style="font-size:10px">${a.name}</div>
+          <div class="note">${a.mission||''}</div></td>
+      <td><span class="stat ${a.status}">${a.status}</span></td>
+      <td><select class="auth-select" data-agent="${a.name}">
+            ${['human_led','human_assisted','autonomous'].map(l=>`<option value="${l}" ${l===a.autonomy?'selected':''}>${l}</option>`).join('')}
+          </select></td>
+      <td>${a.skills||0}</td>
+      <td>${a.pending_tasks||0}<span class="note"> / ${a.routine_tasks} routine</span></td>
+      <td class="actions">
+        <button class="go" data-run="${a.name}">▶ shift</button>
+        <button data-assign="${a.name}">+ assign</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('.auth-select').forEach(sel=>{
+    sel.addEventListener('change', async e=>{
+      try{ await api('/api/agent/'+e.target.dataset.agent+'/autonomy',{method:'POST',body:JSON.stringify({level:e.target.value})}); toast(e.target.dataset.agent+' autonomy → '+e.target.value); }
+      catch(err){ toast('err: '+err.message); }
+    });
+  });
+  tb.querySelectorAll('[data-run]').forEach(b=>{
+    b.addEventListener('click', async e=>{
+      const agent=e.target.dataset.run; e.target.disabled=true; e.target.textContent='running…';
+      try{
+        const r=await api('/api/agent/'+agent+'/shift',{method:'POST',body:'{}'});
+        toast(agent+': '+((r.done||[]).length)+' done'+(r.escalated?' / '+r.escalated+' escalated':''));
+        setTimeout(()=>{ e.target.disabled=false; e.target.textContent='▶ shift'; },1200);
+      }catch(err){ e.target.disabled=false; e.target.textContent='▶ shift'; toast('err: '+err.message); }
+    });
+  });
+  tb.querySelectorAll('[data-assign]').forEach(b=>{
+    b.addEventListener('click', e=>renderAssignForm(e.target.dataset.assign));
+  });
+}
+function renderAssignForm(agent){
+  const rows=[...document.querySelectorAll('#team tr')];
+  let tr=null;
+  for(const r of rows){ if(r.textContent.includes(agent)&&!r.querySelector('.assign-form')){ tr=r; break; } }
+  if(!tr) return;
+  const td=document.createElement('td'); td.colSpan=6;
+  const f=document.createElement('div'); f.className='assign-form open'; f.innerHTML=`
+    <div class="note">assign work to <b>${agent}</b></div>
+    <input placeholder="Task title (what to do)" class="af_title">
+    <input placeholder="Auto-command (e.g. ledger add manual 500 bonus) — blank = note only" class="af_cmd">
+    <div class="actions"><button class="go af_ok">Assign & let them run it</button><button class="af_cancel">Cancel</button></div>`;
+  td.appendChild(f); tr.appendChild(td);
+  const okbtn=f.querySelector('.af_ok');
+  const cancelbtn=f.querySelector('.af_cancel');
+  cancelbtn.onclick=()=>td.remove();
+  okbtn.onclick=async()=>{
+    const title=f.querySelector('.af_title').value.trim();
+    const command=f.querySelector('.af_cmd').value.trim();
+    if(!title){ toast('need a title'); return; }
+    try{
+      await api('/api/agent/'+agent+'/assign',{method:'POST',body:JSON.stringify({title,command})});
+      toast(agent+' has a new assignment (runs on next shift)'); td.remove(); loadAll();
+    }catch(err){ toast('err: '+err.message); }
+  };
+}
+
+function renderEscalations(d){
+  const el=$('#escalations'); el.innerHTML='';
+  const list=(d.escalations||[]);
+  $('#escpill').textContent=list.length+' open escalations';
+  $('#g_esc').textContent=list.length;
+  if(!list.length){ el.innerHTML='<div class="empty">Nothing needs you right now 🎉</div>'; return; }
+  list.forEach(e=>{
+    const x=document.createElement('div'); x.className='esc';
+    x.innerHTML=`<div><span class="${sevCls(e.severity)}">[${e.severity}]</span> <b>${e.subject}</b>
+      <span class="dim" style="float:right;font-size:10px">${e.agent_name} · ${(e.created_at||'').slice(11,19)}</span></div>
+      <div class="det">${e.detail||''}</div>
+      <div class="actions" style="margin-top:.3rem"><button class="go" data-res="${e.id}">✓ Handled</button></div>`;
+    x.querySelector('[data-res]').addEventListener('click', async()=>{
+      try{ await api('/api/escalations/'+e.id+'/resolve',{method:'POST',body:JSON.stringify({resolution:'handled via manager dashboard'})}); toast('escalation #'+e.id+' resolved'); loadAll(); }
+      catch(err){ toast('err: '+err.message); }
+    });
+    el.appendChild(x);
+  });
+}
+
+function renderApprovals(d){
+  const el=$('#approvals'); el.innerHTML='';
+  const list=(d.pending_approvals||[]);
+  $('#g_ap').textContent=list.length;
+  if(!list.length){ el.innerHTML='<div class="empty">no pending store approvals</div>'; return; }
+  list.forEach(a=>{
+    const x=document.createElement('div'); x.className='esc';
+    x.innerHTML=`<div><b>${a.tool_name}</b> <span class="dim">#${a.id}</span>
+      <span class="dim" style="float:right;font-size:10px">${(a.created_at||'').slice(11,19)}</span></div>
+      <div class="det">${a.reasoning||''}</div>
+      <div class="actions" style="margin-top:.3rem">
+        <button class="go" data-aprove="${a.id}">✓ Approve</button>
+        <button class="danger" data-areject="${a.id}">✕ Reject</button></div>`;
+    x.querySelector('[data-aprove]').addEventListener('click', async()=>{
+      try{ await api('/api/query',{method:'POST',body:JSON.stringify({agent:'shopify',query:'approve '+a.id})}); toast('approved #'+a.id); loadAll(); }
+      catch(err){ toast('err: '+err.message); }
+    });
+    x.querySelector('[data-areject]').addEventListener('click', async()=>{
+      try{ await api('/api/query',{method:'POST',body:JSON.stringify({agent:'shopify',query:'reject '+a.id})}); toast('rejected #'+a.id); loadAll(); }
+      catch(err){ toast('err: '+err.message); }
+    });
+    el.appendChild(x);
+  });
+}
+
+function renderStats(d){
+  const money='$'+Number(d.treasury||0).toLocaleString(undefined,{minimumFractionDigits:2});
+  $('#treasury').textContent=money; $('#g_tres').textContent=money;
+  const f=$('#feed'); f.innerHTML='';
+  (d.recent_events||[]).forEach(e=>{
+    const div=document.createElement('div');
+    div.innerHTML=`<span class="dim">${(e.timestamp||'').slice(11,19)}</span> <b style="font-size:11px">${e.agent_name}</b> ${e.type} · <span class="dim">${e.message}</span>`;
+    f.appendChild(div);
+  });
+}
+
+async function loadAll(){
+  try{
+    const d=await api('/api/manager');
+    renderAgents(d); renderEscalations(d); renderApprovals(d); renderStats(d);
+    $('#conn').textContent='live'; $('#conn').className='pill live';
+  }catch(e){ $('#conn').textContent='offline'; $('#conn').className='pill dead'; }
+}
+setInterval(loadAll, 6000);
+loadAll();
+</script>
+</body>
+</html>

@@ -9,17 +9,27 @@ const container = document.getElementById('canvas-container');
 const loadingScreen = document.getElementById('loading-screen');
 const indicator = document.getElementById('connection-indicator');
 
-const agentTitle = document.getElementById('agent-title');
-const agentDistrict = document.getElementById('agent-district');
-const chatMessages = document.getElementById('chat-messages');
-
-const chatAgentSelect = document.getElementById('chat-agent');
+// Inspector (single contextual panel)
+const inspector = document.getElementById('inspector');
+const inspTitle = document.getElementById('insp-title');
+const inspDistrict = document.getElementById('insp-district');
+const inspStatus = document.getElementById('insp-status');
+const inspAutonomy = document.getElementById('insp-autonomy');
+const inspKpis = document.getElementById('insp-kpis');
+const inspDash = document.getElementById('insp-dash');
+const inspEvents = document.getElementById('insp-events');
+const inspTraces = document.getElementById('insp-traces');
+const inspCmds = document.getElementById('insp-cmds');
+const chatLog = document.getElementById('chat-log');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
-const workspaceContent = document.getElementById('workspace-content');
-const reportContent = document.getElementById('report-content');
-const reportEvents = document.getElementById('report-events');
-const meetingOutput = document.getElementById('meeting-output');
+
+// City HUD
+const hudTreasury = document.getElementById('hud-treasury');
+const hudWorking = document.getElementById('hud-working');
+const hudIdle = document.getElementById('hud-idle');
+const hudError = document.getElementById('hud-error');
+const hudEsc = document.getElementById('hud-esc');
 
 // --- Scene ---
 const scene = new THREE.Scene();
@@ -152,7 +162,7 @@ function createFacadeTexture(colorHex, name, w, h, litRatio) {
 }
 
 // --- Building creation ---
-const STATUS_COLORS = { idle: 0x4caf50, working: 0xffb300, error: 0xe53935 };
+const STATUS_COLORS = { idle: 0x4caf50, working: 0xffb300, error: 0xe53935, paused: 0x607d8b };
 const buildingMap = new Map();
 let selectedName = null;
 
@@ -174,6 +184,7 @@ function createBuilding(data) {
   const isCEO = data.name === 'city_hall';
   const h = isCEO ? 6.5 : 3 + (hash(data.name) % 20) * 0.08;
   const rh = isCEO ? 2.5 : 1.2;
+  const ringStatus = data.paused ? 'paused' : data.status;
 
   const grp = new THREE.Group();
   const tex = createFacadeTexture(data.color, data.name, w, h, isCEO ? 0.8 : 0.5);
@@ -193,14 +204,14 @@ function createBuilding(data) {
   base.position.y = 0.075; base.receiveShadow = true; grp.add(base);
 
   const ringMat = new THREE.MeshStandardMaterial({
-    color: STATUS_COLORS[data.status], emissive: STATUS_COLORS[data.status],
+    color: STATUS_COLORS[ringStatus] || STATUS_COLORS.idle, emissive: STATUS_COLORS[ringStatus] || STATUS_COLORS.idle,
     emissiveIntensity: 0.8, transparent: true, opacity: 0.7
   });
   const ring = new THREE.Mesh(new THREE.TorusGeometry(Math.min(w,d)*0.4, 0.08, 12, 24), ringMat);
   ring.rotation.x = Math.PI/2; ring.position.y = 0.1; grp.add(ring);
 
   const glowMat = new THREE.MeshStandardMaterial({
-    color: STATUS_COLORS[data.status], emissive: STATUS_COLORS[data.status],
+    color: STATUS_COLORS[ringStatus] || STATUS_COLORS.idle, emissive: STATUS_COLORS[ringStatus] || STATUS_COLORS.idle
     emissiveIntensity: 0.3, transparent: true, opacity: 0.25, side: THREE.DoubleSide
   });
   const glow = new THREE.Mesh(new THREE.RingGeometry(Math.min(w,d)*0.44, Math.min(w,d)*0.56, 24), glowMat);
@@ -224,13 +235,73 @@ function createBuilding(data) {
 }
 
 function updateBuilding(grp, data) {
-  const sc = STATUS_COLORS[data.status] || STATUS_COLORS.idle;
+  const status = data.paused ? 'paused' : data.status;
+  const sc = STATUS_COLORS[status] || STATUS_COLORS.idle;
   grp.userData.ring.material.color.setHex(sc); grp.userData.ring.material.emissive.setHex(sc);
   grp.userData.glow.material.color.setHex(sc); grp.userData.glow.material.emissive.setHex(sc);
   grp.userData.labelDiv.textContent = data.subject.split(' ').slice(0, 2).join(' ');
 }
 
-// --- Raycasting ---
+// ===================== DISTRICT + STREET LABELS =====================
+// Map pixel grid (city_grid) -> world space, matching createBuilding.
+function gridToWorld(gx, gy) {
+  const sc = 0.05, cx = 400, cy = 240;
+  return { x: (gx - cx) * sc, z: (gy - cy) * sc };
+}
+
+const districtGroup = new THREE.Group();
+scene.add(districtGroup);
+const DISTRICT_LABEL_COLORS = {
+  Financial: '#ffcc80',
+  Media:     '#ce93d8',
+  Research:  '#80cbc4',
+  Commerce:  '#c5e1a5',
+};
+
+function renderOverlay(state) {
+  if (!state) return;
+  for (let i = districtGroup.children.length - 1; i >= 0; i--) {
+    districtGroup.remove(districtGroup.children[i]);
+  }
+
+  // District plaques
+  const districts = state.districts || {};
+  for (const [dname, meta] of Object.entries(districts)) {
+    const [gx, gy] = Array.isArray(meta.center) ? meta.center : [0, 0];
+    const p = gridToWorld(gx, gy);
+    const div = document.createElement('div');
+    div.className = 'district-patch';
+    div.textContent = dname;
+    div.style.color = DISTRICT_LABEL_COLORS[dname] || '#9fb3c9';
+    const obj = new CSS2DObject(div);
+    obj.position.set(p.x, 0.15, p.z);
+    districtGroup.add(obj);
+  }
+
+  // Street signs
+  const streets = state.streets || [];
+  for (const s of streets) {
+    const div = document.createElement('div');
+    div.className = 'street-sign';
+    div.textContent = s.name;
+    const obj = new CSS2DObject(div);
+    if (s.axis === 'vertical') {
+      // vertical street runs N-S at city-grid x; sign at mid depth (town center row)
+      obj.position.set(gridToWorld(s.at, 0).x, 0.12, 0.05);
+    } else {
+      // horizontal street runs E-W at grid y; sign at mid width
+      obj.position.set(0.05, 0.12, gridToWorld(0, s.at).z);
+    }
+    districtGroup.add(obj);
+  }
+}
+
+function loadOverlay() {
+  fetch('/api/city')
+    .then((r) => r.json())
+    .then(renderOverlay)
+    .catch(() => {});
+}
 const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2();
 function getIntersection(event) {
   const r = renderer.domElement.getBoundingClientRect();
@@ -246,45 +317,369 @@ function getIntersection(event) {
 renderer.domElement.addEventListener('click', event => {
   const name = getIntersection(event);
   if (name) selectBuilding(name);
+  else closeInspector();
 });
 renderer.domElement.addEventListener('dblclick', event => {
   const name = getIntersection(event);
   if (name && buildingMap.has(name)) {
-    const p = new THREE.Vector3(); buildingMap.get(name).getWorldPosition(p); controls.target.lerp(p, 0.5);
+    enterBuilding(name);
   }
 });
 
-// ===================== TAB SYSTEM =====================
+// ===================== INSPECTOR (single contextual panel) =====================
 let currentBuilding = null;
 let buildingData = {};
-
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-  });
-});
-
-// ===================== CHAT SYSTEM =====================
 const chatHistory = {};
+
+// ===================== ENTER BUILDING (3D Metaverse Interior) =====================
+let interiorScene = null;
+let exteriorBuildings = [];
+let cameraTarget = null;
+
+function enterBuilding(name) {
+  if (!buildingMap.has(name)) return;
+  const grp = buildingMap.get(name);
+  const p = new THREE.Vector3();
+  grp.getWorldPosition(p);
+
+  // Despawn all buildings
+  exteriorBuildings = [];
+  for (const [n, g] of buildingMap) {
+    exteriorBuildings.push({ name: n, group: g });
+    scene.remove(g);
+  }
+
+  // Spawn interior room
+  const room = createInteriorRoom(name, grp);
+  interiorScene = room;
+  scene.add(room);
+
+  // Fly camera inside
+  cameraTarget = name;
+  const camPos = new THREE.Vector3(p.x, p.y + 2, p.z + 4);
+  const fly = new TWEEN.Tween(camera.position).to(
+    { x: p.x, y: p.y + 2.5, z: p.z + 5 }, 1200
+  ).easing(TWEEN.Easing.Cubic.InOut);
+  fly.start();
+
+  controls.target.set(p.x, p.y + 2, p.z);
+  controls.update();
+
+  // Show exit prompt
+  const exitBtn = document.getElementById('exit-building');
+  if (exitBtn) exitBtn.style.display = 'block';
+
+  // Load interior dashboard
+  fetch('/api/building/' + encodeURIComponent(name) + '/dashboard')
+    .then(r => r.json())
+    .then(data => {
+      const display = document.getElementById('interior-display');
+      if (display && typeof dash === 'function') {
+        display.innerHTML = dash(name, data);
+        display.style.display = 'block';
+      }
+    })
+    .catch(() => {});
+
+  document.getElementById('enter-building').style.display = 'none';
+}
+
+function exitBuilding() {
+  // Remove interior
+  if (interiorScene) {
+    scene.remove(interiorScene);
+    interiorScene = null;
+  }
+
+  const display = document.getElementById('interior-display');
+  if (display) display.style.display = 'none';
+
+  const exitBtn = document.getElementById('exit-building');
+  if (exitBtn) exitBtn.style.display = 'none';
+
+  // Restore buildings
+  for (const { name, group } of exteriorBuildings) {
+    scene.add(group);
+  }
+  exteriorBuildings = [];
+
+  // Zoom camera back out to overview
+  const camPos = new TWEEN.Tween(camera.position).to(
+    { x: 28, y: 22, z: 28 }, 1500
+  ).easing(TWEEN.Easing.Cubic.InOut);
+  camPos.start();
+  controls.target.set(0, 3, 0);
+  controls.update();
+
+  cameraTarget = null;
+}
+
+function togglePause() {
+  if (!currentBuilding) return;
+  const isPaused = buildingData[currentBuilding]?.paused || false;
+  const action = isPaused ? 'resume' : 'pause';
+  fetch('/api/agent/' + encodeURIComponent(currentBuilding) + '/' + action)
+    .then(r => r.json())
+    .then(data => {
+      const btn = document.getElementById('pause-building');
+      if (btn) btn.textContent = data.paused ? 'Resume' : 'Pause';
+      buildingData[currentBuilding] = buildingData[currentBuilding] || {};
+      buildingData[currentBuilding].paused = data.paused;
+    })
+    .catch(() => {});
+}
+
+function createInteriorRoom(name, buildingGroup) {
+  const grp = new THREE.Group();
+  const p = new THREE.Vector3();
+  buildingGroup.getWorldPosition(p);
+
+  // Room walls (floor + 4 walls + ceiling)
+  const wallMat = new THREE.MeshStandardMaterial({
+    color: 0x0a1420, roughness: 0.7, transparent: true, opacity: 0.85
+  });
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x0d1a2a, roughness: 0.85 });
+
+  const w = 6, d = 6, h = 3.5;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.01;
+  floor.receiveShadow = true;
+  grp.add(floor);
+
+  const wallGeo = new THREE.PlaneGeometry(w, h);
+  const walls = [
+    { rot: [0, 0, 0], pos: [0, h/2, -d/2] },       // back
+    { rot: [0, Math.PI, 0], pos: [0, h/2, d/2] },   // front
+    { rot: [0, -Math.PI/2, 0], pos: [-w/2, h/2, 0] }, // left
+    { rot: [0, Math.PI/2, 0], pos: [w/2, h/2, 0] },   // right
+  ];
+  for (const wConf of walls) {
+    const wm = new THREE.Mesh(wallGeo, wallMat);
+    wm.rotation.set(...wConf.rot);
+    wm.position.set(...wConf.pos);
+    wm.receiveShadow = true;
+    grp.add(wm);
+  }
+
+  // Ceiling grid
+  const ceilMat = new THREE.MeshStandardMaterial({ color: 0x1a2a3a, roughness: 0.9 });
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat);
+  ceil.rotation.x = Math.PI / 2;
+  ceil.position.y = h - 0.01;
+  ceil.receiveShadow = true;
+  grp.add(ceil);
+
+  // Holographic display panels (front wall)
+  const panelGeo = new THREE.PlaneGeometry(3, 1.5);
+  const panelMat = new THREE.MeshBasicMaterial({
+    color: 0x00d4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide
+  });
+  for (let i = 0; i < 2; i++) {
+    const panel = new THREE.Mesh(panelGeo, panelMat);
+    panel.position.set(i === 0 ? -1 : 1, h * 0.6, -d/2 + 0.05);
+    panel.rotation.y = Math.PI;
+    grp.add(panel);
+  }
+
+  // Data pedestal (center)
+  const pedestalGeo = new THREE.CylinderGeometry(0.8, 1, 0.3, 16);
+  const pedestalMat = new THREE.MeshStandardMaterial({ color: 0x1a3a5a, roughness: 0.5 });
+  const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
+  pedestal.position.y = 0.15;
+  pedestal.receiveShadow = true;
+  pedestal.castShadow = true;
+  grp.add(pedestal);
+
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: 0x00d4ff, transparent: true, opacity: 0.4, side: THREE.DoubleSide
+  });
+  const glow = new THREE.Mesh(
+    new THREE.RingGeometry(0.7, 0.95, 32), glowMat
+  );
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = 0.31;
+  grp.add(glow);
+
+  // Label
+  const ld = document.createElement('div');
+  ld.className = 'building-label-3d';
+  ld.textContent = name.replace(/_/g, ' ');
+  const lbl = new CSS2DObject(ld);
+  lbl.position.set(0, h, 0);
+  grp.add(lbl);
+
+  grp.position.set(p.x, p.y, p.z);
+  return grp;
+}
+
+// ===================== RENDER =====================
+
+function statusPillClass(status) {
+  return status === 'paused' ? 'paused' :
+         status === 'working' ? 'working' :
+         status === 'error' ? 'error' : 'idle';
+}
+
+function loadBuildingState(name) {
+  fetch('/api/agent/' + encodeURIComponent(name))
+    .then(r => r.json())
+    .then(d => {
+      buildingData[name] = buildingData[name] || {};
+      buildingData[name].status = d.status || buildingData[name].status;
+      buildingData[name].paused = d.paused !== undefined ? d.paused : buildingData[name].paused;
+    })
+    .catch(() => {});
+}
+
+function closeInspector() {
+  currentBuilding = null;
+  if (inspector) inspector.classList.remove('open');
+  buildingMap.forEach((g) => {
+    g.userData.labelDiv.classList.remove('selected');
+  });
+}
 
 function selectBuilding(name) {
   currentBuilding = name;
-  chatAgentSelect.value = name;
-  if (buildingData[name]) {
-    agentTitle.textContent = buildingData[name].subject;
-    agentDistrict.textContent = buildingData[name].district;
-  } else {
-    agentTitle.textContent = name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  }
-  renderChat(name);
-  renderWorkspace(name);
-  loadReport(name);
+  const meta = buildingData[name] || {};
+  inspTitle.textContent = meta.subject
+    || name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  inspDistrict.textContent = meta.district || '';
+  const st = meta.paused ? 'paused' : (meta.status || 'idle');
+  inspStatus.textContent = st;
+  inspStatus.className = 'pill ' + statusPillClass(st);
+  inspAutonomy.textContent = meta.autonomy || '…';
+  chatLog.innerHTML = '';
+  renderWelcome(name);
+  renderCommands(name);
+  inspector.classList.add('open');
+  loadInspector(name);
   buildingMap.forEach((g, n) => {
     g.userData.labelDiv.classList.toggle('selected', n === name);
   });
+  document.getElementById('enter-building').style.display = 'block';
+
+  const pauseBtn = document.getElementById('pause-building');
+  if (pauseBtn) {
+    const isPaused = buildingData[name]?.paused;
+    pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+    pauseBtn.onclick = togglePause;
+  }
+}
+
+async function loadInspector(name) {
+  inspDash.innerHTML = '<p class="hint">Loading dashboard…</p>';
+  inspEvents.innerHTML = '<p class="hint">…</p>';
+  inspTraces.innerHTML = '<p class="hint">…</p>';
+  try {
+    const res = await fetch('/api/building/' + encodeURIComponent(name) + '/dashboard');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    inspDash.innerHTML = (typeof dash === 'function')
+      ? dash(name, data)
+      : '<pre class="dash-json">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+    inspKpis.innerHTML = kpiCards(data.report || {});
+    const events = data.events || [];
+    inspEvents.innerHTML = events.length
+      ? events.map((e) =>
+          '<div class="monitor-event"><span class="ts">' + escapeHtml((e.timestamp || '').slice(0, 16))
+          + '</span> <span class="type">' + escapeHtml(e.type || '') + '</span> — '
+          + escapeHtml(e.message || '') + '</div>').join('')
+      : '<p class="hint">No activity yet.</p>';
+    document.querySelector('#insp-activity summary').textContent =
+      'Activity' + (events.length ? ' (' + events.length + ')' : '');
+    const traces = data.traces || [];
+    inspTraces.innerHTML = (typeof renderTraceHtml === 'function' && traces.length)
+      ? renderTraceHtml(traces)
+      : '<p class="hint">No reasoning activity yet.</p>';
+    document.querySelector('#insp-reasoning summary').textContent =
+      'Reasoning trace' + (traces.length ? ' (' + traces.length + ')' : '');
+  } catch (err) {
+    inspDash.innerHTML = '<p class="hint">Dashboard failed to load: ' + escapeHtml(err.message) + '</p>';
+  }
+  try {
+    const res = await fetch('/api/agent/' + encodeURIComponent(name));
+    if (res.ok) {
+      const d = await res.json();
+      if (d.autonomy) {
+        inspAutonomy.textContent = d.autonomy;
+        buildingData[name] = Object.assign({}, buildingData[name] || {}, { autonomy: d.autonomy });
+      }
+    }
+  } catch (e) { /* non-critical */ }
+}
+
+// ===================== KPI CARDS =====================
+const KPI_LABELS = {
+  revenue_usd: ['Revenue', (v) => '$' + fmtNum(v)],
+  total_revenue_usd: ['Revenue', (v) => '$' + fmtNum(v)],
+  profit_usd: ['Profit', (v) => '$' + fmtNum(v)],
+  treasury_usd: ['Treasury', (v) => '$' + fmtNum(v)],
+  balance_btc: ['Balance', (v) => fmtBtc(v)],
+  total_published: ['Published', (v) => String(v)],
+  total_videos: ['Videos', (v) => String(v)],
+  total_ideas: ['Ideas', (v) => String(v)],
+  open_positions: ['Positions', (v) => String(v)],
+  open_leads: ['Open leads', (v) => String(v)],
+  meetings_held: ['Meetings', (v) => String(v)],
+  campaigns: ['Campaigns', (v) => String(v)],
+  scans_total: ['Scans', (v) => String(v)],
+  roi_percentage: ['ROI', (v) => v + '%'],
+  pending_approvals: ['Approvals', (v) => String(v)],
+};
+
+function kpiCards(report) {
+  const out = [];
+  const seen = new Set();
+  for (const [key, [label, fmt]] of Object.entries(KPI_LABELS)) {
+    if (out.length >= 4) break;
+    const v = report[key];
+    if (v === undefined || v === null || seen.has(key)) continue;
+    seen.add(key);
+    out.push('<div class="kpi"><div class="k">' + label + '</div><div class="v">' + fmt(v) + '</div></div>');
+  }
+  for (const [k, v] of Object.entries(report)) {
+    if (out.length >= 4) break;
+    if (typeof v !== 'number' || seen.has(k)) continue;
+    if (['agent', 'subject'].includes(k)) continue;
+    seen.add(k);
+    const label = k.replace(/_/g, ' ').slice(0, 12);
+    out.push('<div class="kpi"><div class="k">' + escapeHtml(label) + '</div><div class="v">'
+      + (Number.isInteger(v) ? v : v.toFixed(2)) + '</div></div>');
+  }
+  return out.join('');
+}
+
+// ===================== CITY HUD =====================
+function updateHudCounts(buildings) {
+  if (!Array.isArray(buildings)) return;
+  let w = 0, i = 0, e = 0;
+  for (const b of buildings) {
+    if (b.status === 'working') w++;
+    else if (b.status === 'error') e++;
+    else i++;
+  }
+  if (hudWorking) hudWorking.textContent = w;
+  if (hudIdle) hudIdle.textContent = i;
+  if (hudError) hudError.textContent = e;
+}
+
+function updateHudMoney(mgr) {
+  if (!mgr) return;
+  if (hudTreasury && typeof mgr.treasury === 'number') {
+    hudTreasury.textContent = '$' + fmtNum(mgr.treasury);
+  }
+  if (hudEsc && typeof mgr.open_escalations === 'number') {
+    hudEsc.textContent = mgr.open_escalations;
+  }
+}
+
+function pollManager() {
+  fetch('/api/manager')
+    .then((r) => r.json())
+    .then(updateHudMoney)
+    .catch(() => {});
 }
 
 const COMMANDS = {
@@ -373,8 +768,12 @@ const COMMANDS = {
     { label: 'Dept Status', cmd: 'dept status sourcing_research', desc: 'Check research dept' },
   ],
   media_building: [
-    { label: 'Aggregate', cmd: 'aggregate', desc: 'Combined report' },
-    { label: 'Dept Status', cmd: 'dept status content_creation', desc: 'Check content dept' },
+    { label: 'Aggregate', cmd: 'aggregate', desc: 'Combined content report' },
+    { label: 'Queue', cmd: 'queue', desc: 'Ideas in pipeline' },
+    { label: 'New Idea', cmd: 'idea sunset painting for tiktok', desc: 'Add idea' },
+    { label: 'Video Queue', cmd: 'video queue', desc: 'AI video jobs' },
+    { label: 'Viral Insights', cmd: 'viral insights', desc: 'Analytics' },
+    { label: 'Recommend', cmd: 'recommend lifestyle instagram', desc: 'Content ideas' },
   ],
 };
 
@@ -392,61 +791,26 @@ const WELCOME_INTROS = {
   content_analytics: "Viral intelligence and ROI analysis.",
   sourcing_research: "I score product opportunities.",
   research_building: "Research Quarter aggregator. Select sourcing_research below.",
-  media_building: "Media District aggregator. Select departments below.",
+  media_building: "Media Building — creation, AI automation, and analytics in one place.",
 };
 
-function renderChat(name) {
-  chatMessages.innerHTML = '';
-  if (!chatHistory[name] || !chatHistory[name].length) {
-    renderWelcome(name);
-    return;
-  }
-  for (const msg of chatHistory[name]) {
-    if (typeof msg === 'object' && msg.type === 'buttons') {
-      renderButtonRow(msg.commands);
-    } else {
-      chatMessages.appendChild(createMsgEl(msg.role, msg.text, msg.time));
-    }
-  }
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
+// ----- Inspector chat (contextual: bound to the selected building) -----
 function renderWelcome(name) {
   const intro = WELCOME_INTROS[name];
-  if (intro) {
-    chatMessages.appendChild(createMsgEl('agent', intro, ''));
-  }
-  const cmds = COMMANDS[name];
-  if (cmds && cmds.length) {
-    renderButtonRow(cmds);
-  }
+  if (intro) chatLog.appendChild(createMsgEl('agent', intro, ''));
 }
 
-function renderButtonRow(cmds) {
-  const row = document.createElement('div');
-  row.className = 'cmd-btns';
-  const rows = [];
-  let cur = [];
+function renderCommands(name) {
+  inspCmds.innerHTML = '';
+  const cmds = COMMANDS[name] || [];
   for (const c of cmds) {
-    cur.push(c);
-    if (cur.length >= 3) { rows.push(cur); cur = []; }
+    const btn = document.createElement('button');
+    btn.className = 'cmd-btn';
+    btn.title = c.desc || c.cmd;
+    btn.textContent = c.label;
+    btn.addEventListener('click', () => sendCommand(c.cmd));
+    inspCmds.appendChild(btn);
   }
-  if (cur.length) rows.push(cur);
-  for (const group of rows) {
-    const r = document.createElement('div');
-    r.className = 'cmd-row';
-    for (const c of group) {
-      const btn = document.createElement('button');
-      btn.className = 'cmd-btn';
-      btn.title = c.desc || c.cmd;
-      btn.textContent = c.label;
-      btn.dataset.cmd = c.cmd;
-      btn.addEventListener('click', () => sendCommand(c.cmd));
-      r.appendChild(btn);
-    }
-    row.appendChild(r);
-  }
-  chatMessages.appendChild(row);
 }
 
 function createMsgEl(role, text, time) {
@@ -465,362 +829,53 @@ function createMsgEl(role, text, time) {
   return el;
 }
 
+function scrollChat() {
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 async function sendCommand(cmd) {
-  const agent = chatAgentSelect.value;
+  const agent = currentBuilding;
   if (!agent || !cmd) return;
-  if (chatInput) chatInput.value = '';
-  if (!chatHistory[agent]) chatHistory[agent] = [];
   const now = new Date().toLocaleTimeString();
-  chatHistory[agent].push({ role: 'user', text: cmd, time: now });
-  if (currentBuilding === agent) {
-    const empty = chatMessages.querySelector('.chat-empty');
-    if (empty) empty.remove();
-    chatMessages.appendChild(createMsgEl('user', cmd, now));
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+  chatLog.appendChild(createMsgEl('user', cmd, now));
+  const typing = document.createElement('div');
+  typing.className = 'typing';
+  typing.textContent = '…working';
+  chatLog.appendChild(typing);
+  scrollChat();
   try {
     const res = await fetch('/api/query', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agent, query: cmd }),
     });
     const data = await res.json();
-    const rtime = new Date().toLocaleTimeString();
-    const ok = data && data.ok;
-    const role = ok ? 'agent' : 'error';
-    const text = ok ? (data.result || 'ok') : (data && data.error) || 'request failed';
+    typing.remove();
+    const role = data && data.ok ? 'agent' : 'error';
+    const text = data && data.ok ? (data.result || 'ok') : (data && data.error) || 'request failed';
     const displayText = typeof text === 'object' ? JSON.stringify(text, null, 2) : String(text);
-    chatHistory[agent].push({ role, text: displayText, time: rtime });
-    if (currentBuilding === agent) {
-      chatMessages.appendChild(createMsgEl(role, displayText, rtime));
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+    chatLog.appendChild(createMsgEl(role, displayText, new Date().toLocaleTimeString()));
+    scrollChat();
+    // refresh the dashboard if the command may have changed data
+    if (data && data.ok) loadInspector(agent);
   } catch (e) {
-    const etime = new Date().toLocaleTimeString();
-    chatHistory[agent].push({ role: 'error', text: e.message, time: etime });
-    if (currentBuilding === agent) {
-      chatMessages.appendChild(createMsgEl('error', e.message, etime));
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+    typing.remove();
+    chatLog.appendChild(createMsgEl('error', e.message, new Date().toLocaleTimeString()));
+    scrollChat();
   }
 }
 
 async function sendChat() {
-  const agent = chatAgentSelect.value;
   const query = chatInput ? chatInput.value.trim() : '';
-  if (!agent || !query) return;
-  if (chatInput) chatInput.value = '';
-
-  if (!chatHistory[agent]) chatHistory[agent] = [];
-  const now = new Date().toLocaleTimeString();
-  chatHistory[agent].push({ role: 'user', text: query, time: now });
-
-  if (currentBuilding === agent) {
-    const empty = chatMessages.querySelector('.chat-empty');
-    if (empty) empty.remove();
-    chatMessages.appendChild(createMsgEl('user', query, now));
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  try {
-    const res = await fetch('/api/query', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent, query }),
-    });
-    const data = await res.json();
-    const rtime = new Date().toLocaleTimeString();
-    const role = data.ok ? 'agent' : 'error';
-    const text = data.ok ? (data.result || 'ok') : (data.error || 'unknown error');
-    chatHistory[agent].push({ role, text: JSON.stringify(text, null, 2), time: rtime });
-
-    if (currentBuilding === agent) {
-      chatMessages.appendChild(createMsgEl(role, JSON.stringify(text, null, 2), rtime));
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  } catch (e) {
-    const etime = new Date().toLocaleTimeString();
-    chatHistory[agent].push({ role: 'error', text: e.message, time: etime });
-    if (currentBuilding === agent) {
-      chatMessages.appendChild(createMsgEl('error', e.message, etime));
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  }
+  if (!currentBuilding || !query) return;
+  chatInput.value = '';
+  sendCommand(query);
 }
-
-// chat listeners attached at bottom after DOM guards
-
-// ===================== WORKSPACE SYSTEM =====================
-const reportCache = {};
-
-async function renderWorkspace(name) {
-  workspaceContent.innerHTML = '<p class="hint" style="padding:20px;">Loading workspace...</p>';
-  try {
-    const res = await fetch(`/api/agent/${encodeURIComponent(name)}`);
-    if (!res.ok) { workspaceContent.innerHTML = '<p class="hint" style="padding:20px;">Failed to load.</p>'; return; }
-    const detail = await res.json();
-    reportCache[name] = detail;
-    const status = (buildingData[name] && buildingData[name].status) || detail.status || 'idle';
-    workspaceContent.innerHTML = '';
-    const renderer = workspaceRenderers[name] || workspaceRenderers.default;
-    renderer(workspaceContent, name, detail, status);
-  } catch (e) {
-    workspaceContent.innerHTML = `<p class="hint" style="padding:20px;">Error: ${e.message}</p>`;
-  }
-}
-
-const workspaceRenderers = {};
-
-workspaceRenderers['crypto_trading'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Status</h3><div class="value ${status === 'working' ? 'yellow' : status === 'error' ? 'red' : 'green'}">${status}</div></div>
-      <div class="workspace-card"><h3>Positions</h3><div class="value">${r.open_positions || 0}</div></div>
-      <div class="workspace-card"><h3>PnL</h3><div class="value ${(r.pnl||0) >= 0 ? 'green' : 'red'}">$${(r.pnl||0).toFixed(2)}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Strategy</h3><p class="hint">Total trades: ${r.total_trades||0}. Buy/sell by typing commands in Chat.</p></div>
-  `;
-};
-
-workspaceRenderers['market_data'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Running</h3><div class="value ${r.running ? 'green' : 'red'}">${r.running ? 'ON' : 'OFF'}</div></div>
-      <div class="workspace-card"><h3>Pairs</h3><div class="value">${r.monitored_pairs || 0}</div></div>
-      <div class="workspace-card"><h3>Exchanges</h3><div class="value">${r.active_exchanges || 0}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Market Data Engine</h3>
-      <p class="hint">${r.running ? `Receiving updates. Total: ${r.total_updates||0}` : 'Not started. Try: start binance'}</p>
-      <div style="margin-top:6px;font-size:11px;color:#5c6c7a;">
-        ${Object.entries(r.updates_per_exchange||{}).map(([ex, n]) => `<div>${ex}: ${n} updates</div>`).join('')}
-      </div>
-    </div>
-  `;
-};
-
-workspaceRenderers['finance_treasury'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Grand Total</h3><div class="value gold">$${(r.grand_total_usd||0).toFixed(2)}</div></div>
-      <div class="workspace-card"><h3>Ledger Total</h3><div class="value">$${(r.manual_ledger_total_usd||0).toFixed(2)}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Manual Ledger</h3>
-      <p class="hint">Try: ledger add trading +5000 initial capital</p>
-      <p class="hint">Try: ledger</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['finance_building'] = (el, name, d, status) => {
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Status</h3><div class="value ${status === 'working' ? 'yellow' : 'green'}">${status}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Finance District</h3>
-      <p class="hint">crypto_trading — trades BTC/ETH, tracks PnL</p>
-      <p class="hint">market_data — live exchange feeds, ticker, spreads</p>
-      <p class="hint">finance_treasury — manual ledger, aggregate totals</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['shopify'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Orders</h3><div class="value">${r.orders||0}</div></div>
-      <div class="workspace-card"><h3>Revenue</h3><div class="value green">$${(r.revenue||0).toFixed(2)}</div></div>
-      <div class="workspace-card"><h3>Profit</h3><div class="value green">$${(r.profit||0).toFixed(2)}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Orders</h3>
-      <p class="hint">Try: order "t-shirt" revenue 29.99 cost 8.00 dropship</p>
-      <p class="hint">Try: revenue, top products</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['product_flipping'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Inventory</h3><div class="value">${r.open_inventory||0}</div></div>
-      <div class="workspace-card"><h3>Sold</h3><div class="value">${r.sold_items||0}</div></div>
-      <div class="workspace-card"><h3>Margin</h3><div class="value green">$${(r.total_margin_usd||0).toFixed(2)}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Flipping Operations</h3>
-      <p class="hint">Try: source "item name" cost 25.00 → list "item" target 75.00 → sold "item" for 80.00</p>
-      <p class="hint">Try: inventory, margins</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['social_affiliates'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Campaigns</h3><div class="value">${r.campaigns||0}</div></div>
-      <div class="workspace-card"><h3>Revenue</h3><div class="value green">$${(r.revenue||0).toFixed(2)}</div></div>
-      <div class="workspace-card"><h3>Conversion</h3><div class="value">${(r.conversion_rate*100||0).toFixed(1)}%</div></div>
-    </div>
-    <div class="workspace-card"><h3>Affiliate Stats</h3>
-      <p><span class="hint">Clicks: ${r.clicks||0} | Conversions: ${r.conversions||0}</span></p>
-      <p class="hint">Try: campaign tiktok "my offer"</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['content_creation'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Ideas</h3><div class="value">${r.ideas||0}</div></div>
-      <div class="workspace-card"><h3>Drafts</h3><div class="value yellow">${r.drafts||0}</div></div>
-      <div class="workspace-card"><h3>Published</h3><div class="value green">${r.published||0}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Content Pipeline</h3>
-      <p class="hint">Try: idea "my video" for youtube → draft "my video" → publish "my video"</p>
-      <p class="hint">Try: queue</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['content_automation'] = (el, name, d, status) => {
-  const r = d.report || {};
-  const dailyPct = r.daily_budget_remaining_usd != null
-    ? Math.max(0, Math.min(100, ((10 - r.daily_budget_remaining_usd) / 10) * 100)) : 0;
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Queue</h3><div class="value">${r.queue_pending||0}</div></div>
-      <div class="workspace-card"><h3>Completed</h3><div class="value green">${r.completed_today||0}</div></div>
-      <div class="workspace-card"><h3>Failed</h3><div class="value red">${r.failed_today||0}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Budget</h3>
-      <p><span class="hint">Daily remaining: $${(r.daily_budget_remaining_usd||0).toFixed(2)} / Monthly: $${(r.monthly_budget_remaining_usd||0).toFixed(2)}</span></p>
-      <div class="budget-bar"><div class="budget-fill ${dailyPct > 80 ? 'crit' : dailyPct > 50 ? 'warn' : 'ok'}" style="width:${dailyPct}%"></div></div>
-    </div>
-    <div class="workspace-card"><h3>Video Generation</h3>
-      <p class="hint">Try: queue "prompt text" duration 15 kling</p>
-      <p class="hint">Try: providers, budget, queue status</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['content_analytics'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>ROI</h3><div class="value ${(r.roi_percentage||0) >= 0 ? 'green' : 'red'}">${r.roi_percentage||0}%</div></div>
-      <div class="workspace-card"><h3>Videos</h3><div class="value">${r.total_videos||0}</div></div>
-      <div class="workspace-card"><h3>Engagement</h3><div class="value yellow">${r.avg_engagement||0}%</div></div>
-    </div>
-    <div class="workspace-card"><h3>Analytics</h3>
-      <p><span class="hint">Top provider: ${r.top_provider||'none'} | Success: ${(r.success_rate*100||0).toFixed(0)}%</span></p>
-      <p class="hint">Try: analyze strategy, viral insights, trending videos 10</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['sourcing_research'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Open Leads</h3><div class="value">${r.open_leads||0}</div></div>
-      <div class="workspace-card"><h3>Actioned</h3><div class="value">${r.actioned_leads||0}</div></div>
-      <div class="workspace-card"><h3>Avg Score</h3><div class="value gold">${(r.avg_open_score||0).toFixed(1)}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Research</h3>
-      <p class="hint">Try: lead "product" category electronics score 8.5, top leads</p>
-      <p class="hint">Try: action "product name", reject "product name"</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['research_building'] = (el, name, d, status) => {
-  el.innerHTML = `
-    <div class="workspace-card"><h3>Research Quarter</h3>
-      <p class="hint">sourcing_research — scores product opportunities</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['media_building'] = (el, name, d, status) => {
-  el.innerHTML = `
-    <div class="workspace-card"><h3>Media District</h3>
-      <p class="hint">content_creation — idea → draft → publish pipeline</p>
-      <p class="hint">content_automation — AI video generation (Kling, Pika, Runway, HeyGen)</p>
-      <p class="hint">content_analytics — viral intelligence, ROI analysis</p>
-    </div>
-  `;
-};
-
-workspaceRenderers['city_hall'] = (el, name, d, status) => {
-  const r = d.report || {};
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Meetings Held</h3><div class="value">${r.meetings_held||0}</div></div>
-      <div class="workspace-card"><h3>Buildings</h3><div class="value">${Object.keys(buildingData).length}</div></div>
-    </div>
-    <div class="workspace-card"><h3>City Overview</h3>
-      <p class="hint">Click "Hold Meeting" below for a full report.</p>
-      <div style="margin-top:6px;">
-        ${Object.entries(buildingData).map(([n, b]) =>
-          `<div class="inv-item"><span>${b.subject}</span><span class="badge ${b.status === 'idle' ? 'badge-green' : b.status === 'working' ? 'badge-yellow' : 'badge-red'}">${b.status}</span></div>`
-        ).join('')}
-      </div>
-    </div>
-  `;
-};
-
-workspaceRenderers['default'] = (el, name, d, status) => {
-  const r = d.report || {};
-  const fields = Object.entries(r);
-  el.innerHTML = `
-    <div class="stat-row">
-      <div class="workspace-card"><h3>Status</h3><div class="value ${status === 'working' ? 'yellow' : status === 'error' ? 'red' : 'green'}">${status}</div></div>
-      <div class="workspace-card"><h3>District</h3><div class="value" style="font-size:14px;">${d.district}</div></div>
-    </div>
-    <div class="workspace-card"><h3>Report Data</h3>
-      ${fields.length ? fields.map(([k, v]) =>
-        `<div class="inv-item"><span>${k}</span><span>${typeof v === 'object' ? JSON.stringify(v) : v}</span></div>`
-      ).join('') : '<p class="hint">No report data.</p>'}
-    </div>
-  `;
-};
-
-// ===================== REPORT TAB =====================
-async function loadReport(name) {
-  if (!reportContent || !reportEvents) return;
-  try {
-    const res = await fetch(`/api/agent/${encodeURIComponent(name)}`);
-    if (!res.ok) {
-      reportContent.innerHTML = '<p class="hint">Failed to load report.</p>';
-      reportEvents.innerHTML = '';
-      return;
-    }
-    const data = await res.json();
-    const reportRows = Object.entries(data.report || {})
-      .filter(([k]) => k !== 'agent' && k !== 'subject')
-      .map(([k, v]) => `<tr><td>${k}</td><td>${typeof v === 'object' ? JSON.stringify(v) : v}</td></tr>`)
-      .join('');
-    reportContent.innerHTML = reportRows
-      ? `<table class="report-grid">${reportRows}</table>`
-      : '<p class="hint">No report data.</p>';
-    const events = (data.recent_events || [])
-      .map((e) => `<div class="event-item"><span class="ts">${e.timestamp || ''}</span> — ${e.type || ''}: ${e.message || ''}</div>`)
-      .join('');
-    reportEvents.innerHTML = events || '<p class="hint">No activity yet.</p>';
-  } catch (err) {
-    reportContent.innerHTML = `<p class="hint">Error: ${err.message}</p>`;
-    reportEvents.innerHTML = '';
-  }
-}
-
 // ===================== CITY STREAM / BUILDINGS =====================
 let agentSelectPopulated = false;
 
-function updateCity(buildings) {
-  if (!Array.isArray(buildings)) return;
+function updateCity(data) {
+  const buildings = Array.isArray(data) ? data : (data.buildings || []);
+  if (!buildings || !buildings.length) return;
   buildingData = {};
   for (const b of buildings) {
     buildingData[b.name] = b;
@@ -840,11 +895,12 @@ function updateCity(buildings) {
       buildingMap.delete(name);
     }
   }
-  if (!agentSelectPopulated && buildings.length && chatAgentSelect) {
-    chatAgentSelect.innerHTML = buildings
-      .map((b) => `<option value="${b.name}">${b.subject || b.name}</option>`)
-      .join('');
-    agentSelectPopulated = true;
+  updateHudCounts(buildings);
+  // live-refresh the selected building's status pill
+  if (currentBuilding && inspStatus && buildingData[currentBuilding]) {
+    const st = buildingData[currentBuilding].status || 'idle';
+    inspStatus.textContent = st;
+    inspStatus.className = 'pill ' + statusPillClass(st);
   }
   if (loadingScreen && !loadingScreen.classList.contains('done')) {
     loadingScreen.classList.add('done');
@@ -872,7 +928,19 @@ function connectStream() {
   // fallback if SSE stalled
   fetch('/api/city')
     .then((r) => r.json())
-    .then(updateCity)
+    .then((state) => {
+      updateCity(Array.isArray(state) ? state : (state.buildings || []));
+      loadOverlay();
+    })
+    .then(() => fetch('/api/agents').then(r => r.json()).then(agents => {
+      for (const a of agents) {
+        if (buildingData[a.name]) buildingData[a.name].paused = a.paused;
+      }
+      const btn = document.getElementById('pause-building');
+      if (btn && currentBuilding && buildingData[currentBuilding]) {
+        btn.textContent = buildingData[currentBuilding].paused ? 'Resume' : 'Pause';
+      }
+    }).catch(() => {}))
     .catch((e) => {
       console.error('initial /api/city failed', e);
       if (loadingScreen) {
@@ -883,16 +951,13 @@ function connectStream() {
 
 // ===================== MEETING =====================
 const meetingBtn = document.getElementById('trigger-meeting');
-if (meetingBtn && meetingOutput) {
+if (meetingBtn) {
   meetingBtn.addEventListener('click', async () => {
-    meetingOutput.textContent = 'holding meeting…';
+    meetingBtn.textContent = 'Meeting…';
     try {
-      const res = await fetch('/api/meeting', { method: 'POST' });
-      const data = await res.json();
-      meetingOutput.textContent = JSON.stringify(data, null, 2);
-    } catch (e) {
-      meetingOutput.textContent = e.message;
-    }
+      await fetch('/api/meeting', { method: 'POST' });
+    } catch (e) { /* non-critical */ }
+    meetingBtn.textContent = 'Hold Meeting';
   });
 }
 
@@ -912,6 +977,7 @@ window.addEventListener('resize', resize);
 // ===================== ANIMATION =====================
 function animate() {
   requestAnimationFrame(animate);
+  TWEEN.update();
   controls.update();
   const t = Date.now() * 0.001;
   buildingMap.forEach((g) => {
@@ -926,7 +992,7 @@ function animate() {
   labelRenderer.render(scene, camera);
 }
 
-// Guard chat controls if HTML missing (should exist after template fix)
+// Guard chat controls if HTML missing
 if (chatSend && chatInput) {
   chatSend.addEventListener('click', sendChat);
   chatInput.addEventListener('keydown', (e) => {
@@ -934,6 +1000,19 @@ if (chatSend && chatInput) {
   });
 }
 
+// Inspector close controls
+const inspCloseBtn = document.getElementById('insp-close');
+if (inspCloseBtn) inspCloseBtn.addEventListener('click', closeInspector);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && cameraTarget) {
+    exitBuilding();
+  } else if (e.key === 'Escape') {
+    closeInspector();
+  }
+});
+
 connectStream();
+pollManager();
+setInterval(pollManager, 20000);
 animate();
 resize();

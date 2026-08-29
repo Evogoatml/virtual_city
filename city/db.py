@@ -191,6 +191,20 @@ def init_db():
             created_at TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS escalations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            severity TEXT NOT NULL DEFAULT 'info',
+            subject TEXT NOT NULL,
+            detail TEXT,
+            resolved INTEGER NOT NULL DEFAULT 0,
+            resolution TEXT,
+            resolved_at TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_esc_open ON escalations(agent_name, resolved);
+
         CREATE INDEX IF NOT EXISTS idx_runs_agent ON agent_runs(agent_name);
         """
     )
@@ -319,6 +333,55 @@ def recent_runs(conn, agent_name=None, limit=30):
 def render_trace(row) -> str:
     """Render a trace row as '<tag:type:ctmsact> content'."""
     return f"<{row['tag']}:{row['type']}:{row['ctmsact']}> {row['content']}"
+
+
+# ---------------------------------------------------------------------------
+# Escalations — an employee raises these when it can't safely decide
+# ---------------------------------------------------------------------------
+
+def record_escalation(conn, agent_name, subject, detail="", severity="info", data=None):
+    """Log an escalation (an employee flagging something for a human/boss)."""
+    conn.execute(
+        "INSERT INTO escalations (agent_name, created_at, severity, subject, detail) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (agent_name, now_iso(), severity, subject, detail),
+    )
+    conn.commit()
+    try:
+        log_event(conn, agent_name, "escalation", f"{severity}: {subject}",
+                  {"detail": detail, **(data or {})})
+    except Exception:
+        pass
+
+
+def list_escalations(conn, agent_name=None, open_only=False, limit=100):
+    q = "SELECT * FROM escalations"
+    where, args = [], []
+    if agent_name:
+        where.append("agent_name = ?")
+        args.append(agent_name)
+    if open_only:
+        where.append("resolved = 0")
+    if where:
+        q += " WHERE " + " AND ".join(where)
+    q += " ORDER BY id DESC LIMIT ?"
+    args.append(limit)
+    return [dict(r) for r in conn.execute(q, args).fetchall()]
+
+
+def count_open_escalations(conn):
+    return conn.execute(
+        "SELECT COUNT(*) AS c FROM escalations WHERE resolved = 0"
+    ).fetchone()["c"]
+
+
+def resolve_escalation(conn, esc_id, resolution=""):
+    conn.execute(
+        "UPDATE escalations SET resolved = 1, resolution = ?, resolved_at = ? WHERE id = ?",
+        (resolution, now_iso(), esc_id),
+    )
+    conn.commit()
+    return conn.total_changes > 0
 
 
 def upsert_building(conn, name, subject, district, color, x, y, w=90, h=90):

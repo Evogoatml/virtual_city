@@ -13,9 +13,9 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:#05070d;color:var(--txt);font-family:var(--mono);font-size:13px}
-  #bgwebgl{position:fixed;inset:0;width:100%;height:100%;z-index:-1;display:block}
+  #bgwebgl{position:fixed;inset:0;width:100%;height:100%;z-index:-1;display:block;opacity:.5}
   a{color:var(--accent2);text-decoration:none}
-  header{display:flex;align-items:center;gap:1rem;padding:.6rem .9rem;background:rgba(8,10,16,.72);
+  header{display:flex;align-items:center;gap:1rem;padding:.6rem .9rem;background:rgba(8,10,16,.78);
     backdrop-filter:blur(3px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
   header h1{font-size:14px;margin:0;letter-spacing:2px;color:var(--accent)}
   header .ns{color:var(--dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -27,37 +27,55 @@
   main{display:grid;grid-template-columns:300px 1fr 340px;height:calc(100% - 49px)}
   .col{overflow:auto;border-right:1px solid var(--line);padding:.6rem;background:rgba(8,10,16,.55)}
   .col:last-child{border-right:none}
-  .h{font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin:.2rem 0 .5rem}
+  .h{font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin:.7rem 0 .4rem}
+  .h:first-child{margin-top:0}
   .bld{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border:1px solid var(--line);
     border-radius:5px;margin-bottom:.35rem;cursor:pointer;background:var(--panel)}
   .bld:hover{border-color:var(--accent2)}
-  .bld.sel{border-color:var(--accent)}
+  .bld.sel{border-color:var(--accent);background:var(--panel2)}
   .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:none}
   .dot.working{background:var(--warn);box-shadow:0 0 6px var(--warn)}
   .dot.idle{background:var(--good)}
   .dot.error,.dot.stopped{background:var(--bad)}
   .bname{font-weight:600}
   .bsub{color:var(--dim);font-size:11px}
-  .sk{display:flex;justify-content:space-between;padding:.25rem .4rem;border:1px solid var(--line);
+  .dept{display:flex;align-items:center;gap:.4rem;padding:.25rem .4rem .25rem 1.4rem;cursor:pointer;color:var(--dim);font-size:11px}
+  .dept:hover{color:var(--accent2)}
+  .dept.sel{color:var(--accent)}
+  .dept:before{content:"↳";color:var(--line)}
+  .sk{display:flex;justify-content:space-between;gap:.4rem;padding:.3rem .4rem;border:1px solid var(--line);
     border-radius:4px;margin-bottom:.25rem;font-size:11px}
-  .rk{font-size:10px;padding:0 .35rem;border-radius:3px}
+  .sk .d{color:var(--dim);font-size:10px}
+  .rk{font-size:10px;padding:0 .35rem;border-radius:3px;flex:none}
   .rk.read{color:var(--good);border:1px solid var(--good)}
   .rk.write{color:var(--warn);border:1px solid var(--warn)}
   .rk.destructive{color:var(--bad);border:1px solid var(--bad)}
   pre{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.5rem;
-    overflow:auto;max-height:240px;color:var(--txt);font-size:11px;margin:.3rem 0}
+    overflow:auto;max-height:200px;color:var(--txt);font-size:11px;margin:.3rem 0}
   button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:4px;
     padding:.35rem .6rem;cursor:pointer;font-family:var(--mono);font-size:11px}
   button:hover{border-color:var(--accent)}
   button.go{border-color:var(--accent);color:var(--accent)}
-  .row{display:flex;gap:.4rem;margin:.3rem 0}
+  .row{display:flex;gap:.4rem;margin:.4rem 0}
   .feed{font-size:11px;color:var(--dim)}
   .feed div{padding:.15rem 0;border-bottom:1px dashed var(--line)}
   .note{padding:.3rem .4rem;border:1px solid var(--line);border-radius:4px;margin-bottom:.3rem;cursor:pointer}
   .note:hover{border-color:var(--accent2)}
   .meta{color:var(--dim);font-size:10px}
-  .kv{display:flex;justify-content:space-between;padding:.15rem 0;font-size:11px}
+  .kv{display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-size:11px;border-bottom:1px solid #1a2030}
+  .kv span:last-child{color:var(--txt);text-align:right}
   .empty{color:var(--dim);font-style:italic;padding:.5rem}
+  .money{font-size:26px;font-weight:700;color:var(--good);letter-spacing:1px}
+  .mlabel{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px}
+  .ledger{display:grid;grid-template-columns:54px 1fr auto;gap:.3rem;padding:.25rem .2rem;border-bottom:1px solid #1a2030;font-size:11px}
+  .ledger .amt{font-weight:600}
+  .amt.pos{color:var(--good)} .amt.neg{color:var(--bad)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.6rem;margin-bottom:.6rem}
+  input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.35rem;border-radius:4px;font-family:var(--mono);font-size:11px;margin-bottom:.3rem}
+  .summary{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:.4rem .5rem}
+  .stat .v{font-size:16px;font-weight:700}
+  .stat .l{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -73,7 +91,7 @@
 
 <main>
   <div class="col">
-    <div class="h">Buildings</div>
+    <div class="h">City — by district</div>
     <div id="buildings"></div>
   </div>
 
@@ -82,17 +100,30 @@
   </div>
 
   <div class="col">
-    <div class="h">Connect Shopify</div>
-    <div class="note" style="cursor:default">
-      <input id="sx_domain" placeholder="store.myshopify.com" style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.3rem;border-radius:4px;font-family:var(--mono);font-size:11px">
-      <input id="sx_token" placeholder="Admin API access token (shpat_...)" style="width:100%;margin-top:.3rem;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.3rem;border-radius:4px;font-family:var(--mono);font-size:11px">
-      <input id="sx_base" placeholder="https://xxx.trycloudflare.com" style="width:100%;margin-top:.3rem;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:.3rem;border-radius:4px;font-family:var(--mono);font-size:11px">
-      <button class="go" id="sx_connect" style="margin-top:.4rem">▶ Connect & register webhooks</button>
+    <div class="h">Overview</div>
+    <div class="card">
+      <div class="summary">
+        <div class="stat"><div class="v" id="st_buildings">—</div><div class="l">buildings</div></div>
+        <div class="stat"><div class="v" id="st_working">—</div><div class="l">active now</div></div>
+        <div class="stat"><div class="v" id="st_money">$0</div><div class="l">treasury</div></div>
+        <div class="stat"><div class="v" id="st_brain">—</div><div class="l">brain notes</div></div>
+      </div>
+      <div class="kv" style="margin-top:.4rem"><span>North star</span><span id="ns2">—</span></div>
+    </div>
+
+    <div class="h">Shopify</div>
+    <div class="card">
+      <input id="sx_domain" placeholder="store.myshopify.com">
+      <input id="sx_token" placeholder="Admin API token (shpat_...)">
+      <input id="sx_base" placeholder="https://your-app.onrender.com">
+      <button class="go" id="sx_connect">▶ Connect & register webhooks</button>
       <div id="sx_status" class="meta" style="margin-top:.3rem"></div>
     </div>
-    <div class="h" style="margin-top:.8rem">Live Feed (SSE)</div>
+
+    <div class="h">Live activity</div>
     <div class="feed" id="feed"></div>
-    <div class="h" style="margin-top:.8rem">Knowledge Brain</div>
+
+    <div class="h">Knowledge brain</div>
     <div id="brain"></div>
   </div>
 </main>
@@ -100,6 +131,7 @@
 <script>
 const $ = s => document.querySelector(s);
 let selected = null;
+let lastCity = null;
 
 async function api(path, opts){
   const r = await fetch(path, opts||{});
@@ -107,115 +139,157 @@ async function api(path, opts){
   try { return await r.json(); } catch(e){ throw new Error(path+' -> bad JSON'); }
 }
 function showErr(msg){ $('#detail').innerHTML = '<div class="empty" style="color:var(--bad)">⚠ '+msg+'</div>'; console.error(msg); }
+function fmt(n){ return (typeof n==='number') ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : (n??''); }
+function humanize(k){ return k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+function statusClass(s){ return s||'idle'; }
 
-// Shopify one-click connect
+// ---- Shopify connect ----
 $('#sx_connect').addEventListener('click', async ()=>{
-  const payload = {
-    shop_domain: $('#sx_domain').value.trim(),
-    access_token: $('#sx_token').value.trim(),
-    base_url: $('#sx_base').value.trim(),
-  };
+  const payload = { shop_domain:$('#sx_domain').value.trim(), access_token:$('#sx_token').value.trim(), base_url:$('#sx_base').value.trim() };
   if(!payload.shop_domain || !payload.access_token){ $('#sx_status').textContent='need domain + token'; return; }
   $('#sx_status').textContent='connecting…';
   try{
     const r = await api('/api/shopify/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const ok = (r.results||[]).filter(x=>x.result && x.result.get && x.result.get('errors')).length;
-    $('#sx_status').textContent = r.ok ? `connected (${r.results.length} webhooks registered)` : 'failed';
+    $('#sx_status').textContent = r.ok ? `connected (${r.results.length} webhooks)` : 'failed';
   }catch(e){ $('#sx_status').textContent='error: '+e.message; }
 });
 
+// ---- personas ----
 async function loadPersonas(){
   const d = await api('/api/persona');
   const sel = $('#persona'); sel.innerHTML='';
-  (d.personas||[]).forEach(p=>{
-    const o=document.createElement('option'); o.value=p.name; o.textContent=p.title||p.name;
-    if(p.name===d.active) o.selected=true; sel.appendChild(o);
-  });
+  (d.personas||[]).forEach(p=>{ const o=document.createElement('option'); o.value=p.name; o.textContent=p.title||p.name; if(p.name===d.active)o.selected=true; sel.appendChild(o); });
   $('#northstar').textContent = d.north_star || '—';
+  $('#ns2').textContent = (d.north_star||'—').slice(0,40);
 }
 $('#persona').addEventListener('change', async e=>{
-  await api('/api/persona/activate',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name:e.target.value})});
+  await api('/api/persona/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:e.target.value})});
   loadPersonas();
 });
 
-function statusClass(s){ return s||'idle'; }
-
-async function renderCity(state){
+// ---- left list: grouped by district, departments nested ----
+const DISTRICT_RANK = ['Financial District','Commerce District','Media District','Research District','Downtown','Uptown'];
+function renderCity(state){
   const list = $('#buildings'); list.innerHTML='';
-  const builds = (state && state.buildings) ? state.buildings : (Array.isArray(state)?state:[]);
+  const builds = (state && state.buildings) ? state.buildings : [];
   (state && state.north_star) && ($('#northstar').textContent = state.north_star);
-  (state && state.brain_notes!=null) && ($('#braincount').textContent = 'brain '+state.brain_notes);
-  builds.forEach(b=>{
-    const el=document.createElement('div'); el.className='bld'+(b.name===selected?' sel':'');
-    el.innerHTML=`<span class="dot ${statusClass(b.status)}"></span>
-      <span><span class="bname">${b.name}</span><br><span class="bsub">${b.subject||''}</span></span>`;
-    el.onclick=()=>{ selected=b.name; renderCity(state); loadDetail(b.name); };
-    list.appendChild(el);
+  (state && state.brain_notes!=null) && ($('#braincount').textContent='brain '+state.brain_notes) && ($('#st_brain').textContent=state.brain_notes);
+  $('#st_buildings').textContent = builds.length;
+  $('#st_working').textContent = builds.filter(b=>b.status==='working').length;
+  const groups = {};
+  builds.forEach(b=>{ const d=b.district||'Other'; (groups[d]=groups[d]||[]).push(b); });
+  const dists = Object.keys(groups).sort((a,b)=>{
+    const ia=DISTRICT_RANK.indexOf(a), ib=DISTRICT_RANK.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);
   });
+  dists.forEach(d=>{
+    const dh=document.createElement('div'); dh.className='h'; dh.textContent=d; list.appendChild(dh);
+    groups[d].forEach(b=>{
+      const el=document.createElement('div'); el.className='bld'+(b.name===selected?' sel':'');
+      el.innerHTML=`<span class="dot ${statusClass(b.status)}"></span><span><span class="bname">${b.name}</span><br><span class="bsub">${b.subject||''}</span></span>`;
+      el.onclick=()=>{ selected=b.name; renderCity(state); loadDetail(b.name); };
+      list.appendChild(el);
+      (b.departments||[]).forEach(dep=>{
+        const d2=document.createElement('div'); d2.className='dept'+(dep===selected?' sel':''); d2.textContent=dep;
+        d2.onclick=(e)=>{ e.stopPropagation(); selected=dep; renderCity(state); loadDetail(dep); };
+        list.appendChild(d2);
+      });
+    });
+  });
+}
+
+// ---- middle: inspector ----
+function renderReport(rep){
+  if(!rep || typeof rep!=='object') return '<div class="empty">no data</div>';
+  let h='';
+  if(Array.isArray(rep.recent_ledger)){
+    const total = (rep.grand_total_usd!=null)?rep.grand_total_usd:0;
+    h+=`<div class="money">$${fmt(total)}</div><div class="mlabel">total in treasury</div>`;
+    if(rep.recent_ledger.length){
+      h+='<div class="h" style="margin-top:.6rem">Recent income</div>';
+      rep.recent_ledger.forEach(e=>{
+        const sign=e.amount>=0?'+':'';
+        h+=`<div class="ledger"><span>${e.when||''}</span><span>${e.source||''}</span><span class="amt ${e.amount>=0?'pos':'neg'}">${sign}$${fmt(e.amount)}</span></div>`;
+      });
+    } else { h+='<div class="empty" style="margin-top:.4rem">no income recorded yet</div>'; }
+  }
+  if(rep.breakdown && typeof rep.breakdown==='object'){
+    h+='<div class="h" style="margin-top:.6rem">From other buildings</div>';
+    Object.entries(rep.breakdown).forEach(([k,v])=>{
+      let val='';
+      if(v&&typeof v==='object'){ const f=Object.entries(v).find(([kk,vv])=>typeof vv==='number'); val=f?fmt(f[1]):''; }
+      h+=`<div class="kv"><span>${k}</span><span>${val}</span></div>`;
+    });
+  }
+  const skip=new Set(['agent','subject','recent_ledger','breakdown','_error']);
+  Object.entries(rep).forEach(([k,v])=>{
+    if(skip.has(k)||v==null) return;
+    if(typeof v==='object') return;
+    h+=`<div class="kv"><span>${humanize(k)}</span><span>${v}</span></div>`;
+  });
+  if(rep._error) h+=`<div class="empty" style="color:var(--bad)">error: ${rep._error}</div>`;
+  return h;
 }
 
 async function loadDetail(name){
   try{
-  const [a, runs] = await Promise.all([api('/api/agent/'+name), api('/api/agent/'+name+'/runs')]);
-  const skills = (a.skills||[]).map(s=>
-    `<div class="sk"><span>${s.name}</span><span class="rk ${s.risk}">${s.risk}</span></div>`).join('') || '<div class="empty">no skills</div>';
-  const rep = a.report ? JSON.stringify(a.report,null,2) : '—';
-  const runRows = (runs.runs||[]).slice(0,12).map(r=>
-    `<div class="kv"><span>${r.skill}</span><span>${r.status} · ${r.created_at.slice(11,19)}</span></div>`).join('') || '<div class="empty">no runs yet</div>';
-  $('#detail').innerHTML = `
-    <div class="h">${a.name} — ${a.subject||''}</div>
-    <div class="kv"><span>status</span><span>${a.status||'—'}</span></div>
-    <div class="kv"><span>autonomy</span><span>${a.autonomy||'—'}</span></div>
-    <div class="row">
-      <button class="go" id="runbtn">▶ Run agent</button>
-      <button id="evtbtn">↻ Refresh</button>
-    </div>
-    <div class="h">Skills</div>${skills}
-    <div class="h">Report</div><pre>${rep}</pre>
-    <div class="h">Recent runs</div>${runRows}`;
-  $('#runbtn').onclick = async ()=>{
-    try{
-    $('#runbtn').textContent='running…';
-    await api('/api/agent/'+name+'/run',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-    setTimeout(()=>loadDetail(name), 1200);
-    }catch(e){ showErr(e.message); }
-  };
-  $('#evtbtn').onclick = ()=>loadDetail(name);
+    const [a, runs] = await Promise.all([api('/api/agent/'+name), api('/api/agent/'+name+'/runs')]);
+    const skills = (a.skills||[]).map(s=>
+      `<div class="sk"><span><b>${s.name}</b><br><span class="d">${s.description||''}</span></span><span class="rk ${s.risk}">${s.risk}</span></div>`).join('') || '<div class="empty">no skills</div>';
+    const runRows = (runs.runs||[]).slice(0,10).map(r=>
+      `<div class="kv"><span>${r.skill}</span><span>${r.status} · ${(r.created_at||'').slice(11,19)}</span></div>`).join('') || '<div class="empty">no runs yet</div>';
+
+    let deptLinks='';
+    const b = (lastCity&&lastCity.buildings||[]).find(x=>x.name===name);
+    if(b && (b.departments||[]).length){
+      deptLinks='<div class="h">Departments</div>'+b.departments.map(d=>`<div class="dept" onclick="selected='${d}';renderCity(lastCity);loadDetail('${d}')">${d}</div>`).join('');
+    }
+
+    $('#detail').innerHTML = `
+      <div class="h">${a.name}</div>
+      <div class="kv"><span>What</span><span>${a.subject||'—'}</span></div>
+      <div class="kv"><span>Status</span><span>${a.status||'—'}</span></div>
+      <div class="kv"><span>Autonomy</span><span>${a.autonomy||'—'}</span></div>
+      ${deptLinks}
+      <div class="row">
+        <button class="go" id="runbtn">▶ Run</button>
+        <button id="evtbtn">↻ Refresh</button>
+      </div>
+      <div class="h">Snapshot</div>${renderReport(a.report)}
+      <div class="h">Skills</div>${skills}
+      <div class="h">Recent runs</div>${runRows}`;
+    $('#runbtn').onclick = async ()=>{
+      $('#runbtn').textContent='running…';
+      try{ await api('/api/agent/'+name+'/run',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); setTimeout(()=>loadDetail(name),1200); }
+      catch(e){ showErr(e.message); }
+    };
+    $('#evtbtn').onclick = ()=>loadDetail(name);
   }catch(e){ showErr(e.message); }
 }
 
+// ---- brain ----
 async function loadBrain(){
   const d = await api('/api/brain');
   const el=$('#brain'); el.innerHTML='';
   (d.notes||[]).forEach(n=>{
     const x=document.createElement('div'); x.className='note';
     x.innerHTML=`<div>${n.title}</div><div class="meta">${n.slug}</div>`;
-    x.onclick=async()=>{
-      const note=await api('/api/brain/'+n.slug);
-      x.innerHTML=`<div>${n.title}</div><pre>${note.body||''}</pre>`;
-    };
+    x.onclick=async()=>{ const note=await api('/api/brain/'+n.slug); x.innerHTML=`<div>${n.title}</div><pre>${note.body||''}</pre>`; };
     el.appendChild(x);
   });
 }
 
-// SSE live feed
+// ---- live ----
 const es = new EventSource('/api/stream');
-let lastCity=null;
 es.onopen = ()=>{ const c=$('#conn'); c.textContent='live'; c.className='pill live'; };
 es.onerror = ()=>{ const c=$('#conn'); c.textContent='offline'; c.className='pill dead'; };
 es.onmessage = (ev)=>{
   try{
-    const st = JSON.parse(ev.data);
-    lastCity = st;
-    renderCity(st);
-    if(selected) {} // keep selection
+    const st = JSON.parse(ev.data); lastCity = st; renderCity(st);
     const t = new Date().toLocaleTimeString();
-    const fb=$('#feed');
-    const newB = (st.buildings||[]).filter(b=>b.status==='working').map(b=>b.name);
-    const line = newB.length? `▸ ${newB.join(', ')} working` : `· tick ${t}`;
-    const d=document.createElement('div'); d.textContent=line; fb.prepend(d);
-    while(fb.children.length>40) fb.removeChild(fb.lastChild);
+    const working=(st.buildings||[]).filter(b=>b.status==='working').map(b=>b.name);
+    const d=document.createElement('div'); d.textContent = working.length? `▸ ${working.join(', ')} working` : `· ${t}`;
+    const fb=$('#feed'); fb.prepend(d); while(fb.children.length>40) fb.removeChild(fb.lastChild);
   }catch(e){}
 };
 
@@ -223,79 +297,57 @@ es.onmessage = (ev)=>{
   await loadPersonas();
   const st = await api('/api/city'); lastCity=st; renderCity(st);
   if(st.buildings&&st.buildings[0]){ selected=st.buildings[0].name; loadDetail(selected); }
+  // treasury total for overview
+  try{ const f=await api('/api/agent/finance_treasury'); $('#st_money').textContent='$'+(f.report&&f.report.grand_total_usd!=null?fmt(f.report.grand_total_usd):'0'); }catch(e){}
   loadBrain();
   initWebGL();
 })();
 
-// ---- WebGL city field (raw, no deps) ----
+// ---- WebGL city field (ambiance, no deps) ----
 function initWebGL(){
-  const cv = document.getElementById('bgwebgl');
-  const gl = cv.getContext('webgl'); if(!gl) return;
-  const dpr = ()=>Math.min(window.devicePixelRatio||1, 2);
-  function resize(){ cv.width=Math.floor(innerWidth*dpr()); cv.height=Math.floor(innerHeight*dpr());
-    cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; gl.viewport(0,0,cv.width,cv.height); }
-  resize(); addEventListener('resize', resize);
-
-  const pv=`attribute vec2 p;attribute vec3 c;attribute float s;varying vec3 vc;
-    void main(){vc=c;gl_Position=vec4(p,0.0,1.0);gl_PointSize=s;}`,
-    pf=`precision mediump float;varying vec3 vc;
-    void main(){vec2 d=gl_PointCoord-vec2(0.5);float r=length(d);
-    float a=smoothstep(0.5,0.0,r);gl_FragColor=vec4(vc,a);}`,
-    lv=`attribute vec2 p;attribute vec3 c;attribute float a;varying vec3 vc;varying float va;
-    void main(){vc=c;va=a;gl_Position=vec4(p,0.0,1.0);}`,
-    lf=`precision mediump float;varying vec3 vc;varying float va;
-    void main(){gl_FragColor=vec4(vc,va);}`;
+  const cv=document.getElementById('bgwebgl'); const gl=cv.getContext('webgl'); if(!gl) return;
+  const dpr=()=>Math.min(window.devicePixelRatio||1,2);
+  function resize(){ cv.width=Math.floor(innerWidth*dpr()); cv.height=Math.floor(innerHeight*dpr()); cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; gl.viewport(0,0,cv.width,cv.height); }
+  resize(); addEventListener('resize',resize);
+  const pv=`attribute vec2 p;attribute vec3 c;attribute float s;varying vec3 vc;void main(){vc=c;gl_Position=vec4(p,0.0,1.0);gl_PointSize=s;}`,
+    pf=`precision mediump float;varying vec3 vc;void main(){vec2 d=gl_PointCoord-vec2(0.5);float r=length(d);float a=smoothstep(0.5,0.0,r);gl_FragColor=vec4(vc,a);}`,
+    lv=`attribute vec2 p;attribute vec3 c;attribute float a;varying vec3 vc;varying float va;void main(){vc=c;va=a;gl_Position=vec4(p,0.0,1.0);}`,
+    lf=`precision mediump float;varying vec3 vc;varying float va;void main(){gl_FragColor=vec4(vc,va);}`;
   const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;};
-  const prog=(v,f)=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));
-    gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);return p;};
+  const prog=(v,f)=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);return p;};
   const PP=prog(pv,pf), LP=prog(lv,lf);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   const pa={p:gl.getAttribLocation(PP,'p'),c:gl.getAttribLocation(PP,'c'),s:gl.getAttribLocation(PP,'s')};
   const la={p:gl.getAttribLocation(LP,'p'),c:gl.getAttribLocation(LP,'c'),a:gl.getAttribLocation(LP,'a')};
   const pb=gl.createBuffer(), lb=gl.createBuffer();
-
-  const colorFor = st => st==='working' ? [1,.69,.13]
-    : (st==='error'||st==='stopped') ? [1,.33,.44]
-    : st==='idle' ? [.22,1,.08] : [.49,.54,.64];
-
+  const colorFor=st=>st==='working'?[1,.69,.13]:(st==='error'||st==='stopped')?[1,.33,.44]:st==='idle'?[.22,1,.08]:[.49,.54,.64];
   function frame(t){
-    const time=t*0.001;
-    gl.clearColor(.02,.027,.05,1); gl.clear(gl.COLOR_BUFFER_BIT);
+    const time=t*0.001; gl.clearColor(.02,.027,.05,1); gl.clear(gl.COLOR_BUFFER_BIT);
     const bs=((lastCity&&lastCity.buildings)||[]); const W=cv.width,H=cv.height;
     if(bs.length){
       let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
-      bs.forEach(b=>{const x=b.x||0,y=b.y||0;minX=Math.min(minX,x);maxX=Math.max(maxX,x+(b.w||90));
-        minY=Math.min(minY,y);maxY=Math.max(maxY,y+(b.h||90));});
-      const gw=Math.max(1,maxX-minX), gh=Math.max(1,maxY-minY), pad=.82;
+      bs.forEach(b=>{const x=b.x||0,y=b.y||0;minX=Math.min(minX,x);maxX=Math.max(maxX,x+(b.w||90));minY=Math.min(minY,y);maxY=Math.max(maxY,y+(b.h||90));});
+      const gw=Math.max(1,maxX-minX),gh=Math.max(1,maxY-minY),pad=.82;
       const center=bs.find(b=>b.name==='city_hall')||bs[0];
-      const cc=center ? {x:center.x+(center.w||120)/2, y:center.y+(center.h||120)/2} : null;
-      const clip=(x,y)=>{const nx=(x-minX)/gw, ny=(y-minY)/gh;
-        return [(nx*2-1)*pad, (1-(ny*2-1)*pad)];};
-      const pts=[], lines=[];
+      const cc=center?{x:center.x+(center.w||120)/2,y:center.y+(center.h||120)/2}:null;
+      const clip=(x,y)=>{const nx=(x-minX)/gw,ny=(y-minY)/gh;return [(nx*2-1)*pad,(1-(ny*2-1)*pad)];};
+      const pts=[],lines=[];
       bs.forEach((b,i)=>{
-        const ctr=clip(b.x+(b.w||90)/2, b.y+(b.h||90)/2);
-        const col=colorFor(b.status); const pulse=.5+.5*Math.sin(time*2+i);
+        const ctr=clip(b.x+(b.w||90)/2,b.y+(b.h||90)/2); const col=colorFor(b.status); const pulse=.5+.5*Math.sin(time*2+i);
         const size=(b.status==='working'?11+pulse*12:5+pulse*2)*dpr();
         pts.push(ctr[0],ctr[1],col[0],col[1],col[2],size);
-        if(cc&&b.name!=='city_hall'){ const cc2=clip(cc.x,cc.y);
-          lines.push(ctr[0],ctr[1],col[0],col[1],col[2],.10, cc2[0],cc2[1],col[0],col[1],col[2],.10); }
+        if(cc&&b.name!=='city_hall'){const cc2=clip(cc.x,cc.y);lines.push(ctr[0],ctr[1],col[0],col[1],col[2],.10,cc2[0],cc2[1],col[0],col[1],col[2],.10);}
       });
-      if(lines.length){
-        gl.useProgram(LP); gl.bindBuffer(gl.ARRAY_BUFFER,lb);
-        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lines),gl.DYNAMIC_DRAW);
-        gl.enableVertexAttribArray(la.p); gl.vertexAttribPointer(la.p,2,gl.FLOAT,false,24,0);
-        gl.enableVertexAttribArray(la.c); gl.vertexAttribPointer(la.c,3,gl.FLOAT,false,24,8);
-        gl.enableVertexAttribArray(la.a); gl.vertexAttribPointer(la.a,1,gl.FLOAT,false,24,20);
-        gl.drawArrays(gl.LINES,0,lines.length/6);
-      }
-      if(pts.length){
-        gl.useProgram(PP); gl.bindBuffer(gl.ARRAY_BUFFER,pb);
-        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pts),gl.DYNAMIC_DRAW);
-        gl.enableVertexAttribArray(pa.p); gl.vertexAttribPointer(pa.p,2,gl.FLOAT,false,24,0);
-        gl.enableVertexAttribArray(pa.c); gl.vertexAttribPointer(pa.c,3,gl.FLOAT,false,24,8);
-        gl.enableVertexAttribArray(pa.s); gl.vertexAttribPointer(pa.s,1,gl.FLOAT,false,24,20);
-        gl.drawArrays(gl.POINTS,0,pts.length/6);
-      }
+      if(lines.length){gl.useProgram(LP);gl.bindBuffer(gl.ARRAY_BUFFER,lb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lines),gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(la.p);gl.vertexAttribPointer(la.p,2,gl.FLOAT,false,24,0);
+        gl.enableVertexAttribArray(la.c);gl.vertexAttribPointer(la.c,3,gl.FLOAT,false,24,8);
+        gl.enableVertexAttribArray(la.a);gl.vertexAttribPointer(la.a,1,gl.FLOAT,false,24,20);
+        gl.drawArrays(gl.LINES,0,lines.length/6);}
+      if(pts.length){gl.useProgram(PP);gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pts),gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(pa.p);gl.vertexAttribPointer(pa.p,2,gl.FLOAT,false,24,0);
+        gl.enableVertexAttribArray(pa.c);gl.vertexAttribPointer(pa.c,3,gl.FLOAT,false,24,8);
+        gl.enableVertexAttribArray(pa.s);gl.vertexAttribPointer(pa.s,1,gl.FLOAT,false,24,20);
+        gl.drawArrays(gl.POINTS,0,pts.length/6);}
     }
     requestAnimationFrame(frame);
   }

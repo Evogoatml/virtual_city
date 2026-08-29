@@ -2,9 +2,9 @@
 Scraper Building — web data extraction with anti-bot resilience.
 
 Three-tier fetcher:
-  Tier 1 — httpx with browser-like fingerprints
+  Tier 1 — scrapling (StealthScraper — anti-detection)
   Tier 2 — requests with rotating headers + 403 bypass mutations
-  Tier 3 — playwright headless browser (fallback)
+  Tier 3 — httpx with browser-like fingerprints (fallback)
 
 Output is always structured: markdown body + extracted metadata + raw HTML
 stored for re-processing.  Queue persists in SQLite so crawls survive restarts.
@@ -18,6 +18,13 @@ from city.department import Department
 from city.db import now_iso, log_event
 
 # ── Fetcher tiers ───────────────────────────────────────────────────
+try:
+    import scrapling
+    from scrapling import Fetcher
+    HAS_SCRAPLE = True
+except ImportError:
+    HAS_SCRAPLE = False
+
 try:
     import httpx
     HAS_HTTPX = True
@@ -44,7 +51,7 @@ except ImportError:
 
 
 class ScraperDepartment(Department):
-    building_name = "research_building"
+    building_name = "supply_scout"
     name = "scraper"
     subject = "Web Scraper"
     color = "#00c853"
@@ -112,30 +119,20 @@ class ScraperDepartment(Department):
     # ═══════════════════════════════════════════════════════════════════
 
     def _fetch(self, url, tier=1):
-        """Three-tier fetch.  Tier 1 = httpx with fingerprints.
+        """Three-tier fetch.  Tier 1 = scrapling Fetcher (anti-detection fingerprints).
         Tier 2 = requests with 403 bypass mutations.
-        Tier 3 = playwright (stub — requires playwright install).
-        Returns (status_code, body_bytes, tier_used, error)."""
+        Tier 3 = httpx with browser-like fingerprints (fallback).
+        Returns (status_code, body_bytes, tier_used, error, ms)."""
         start = time.perf_counter()
 
-        if tier <= 1 and HAS_HTTPX:
+        if tier <= 1 and HAS_SCRAPLE:
             try:
-                if not self._client:
-                    self._client = httpx.Client(
-                        follow_redirects=True,
-                        timeout=20.0,
-                        headers={
-                            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                                          "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                            "Accept-Language": "en-US,en;q=0.9",
-                            "Accept-Encoding": "gzip, deflate",
-                            "Referer": "https://www.google.com/",
-                        },
-                    )
-                resp = self._client.get(url)
+                resp = Fetcher.get(url, timeout=20, headers=self._base_headers())
                 ms = int((time.perf_counter() - start) * 1000)
-                return resp.status_code, resp.content, 1, None, ms
+                body = resp.body or b""
+                if isinstance(body, str):
+                    body = body.encode("utf-8")
+                return resp.status or 0, body, 1, None, ms
             except Exception as e:
                 if tier == 1:
                     return self._fetch(url, tier=2)
@@ -164,7 +161,21 @@ class ScraperDepartment(Department):
             except Exception as e:
                 return 0, b"", 2, str(e), int((time.perf_counter() - start) * 1000)
 
-        return 0, b"", 0, "no fetcher available (install httpx or requests)", int((time.perf_counter() - start) * 1000)
+        if tier <= 3 and HAS_HTTPX:
+            try:
+                if not self._client:
+                    self._client = httpx.Client(
+                        follow_redirects=True,
+                        timeout=20.0,
+                        headers=self._base_headers(),
+                    )
+                resp = self._client.get(url)
+                ms = int((time.perf_counter() - start) * 1000)
+                return resp.status_code, resp.content, 3, None, ms
+            except Exception as e:
+                return 0, b"", 3, str(e), int((time.perf_counter() - start) * 1000)
+
+        return 0, b"", 0, "no fetcher available (install scrapling, requests, or httpx)", int((time.perf_counter() - start) * 1000)
 
     @staticmethod
     def _base_headers():

@@ -1,1 +1,0 @@
-exclude_dirs: ['.kiro','.q','.venv','.vscode','.venv-deployment', 'bandit-env', .git, bedrock-adtech-demo/node_modules, bedrock-adtech-demo/.angular]

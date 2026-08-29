@@ -15,6 +15,7 @@ from city.db import log_event, now_iso
 
 
 class SignalAgent(Department):
+    building_name = "research_building"
     name = "signal"
     subject = "Change Detection"
     district = "Research Quarter"

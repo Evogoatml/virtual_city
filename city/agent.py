@@ -26,6 +26,11 @@ class Agent:
         self.register_skills()
         self._register_orchestrator()
 
+    @property
+    def cognitive(self):
+        """Backwards-compatible alias for self.cognition (per-building orchestrator)."""
+        return self.cognition
+
     def _register_orchestrator(self):
         """Register this agent with the building orchestrator."""
         from city.orchestrator import ORCHESTRATOR
@@ -52,11 +57,42 @@ class Agent:
     # to give that building its own reasoning cadence (#1 chronoschedule).
     cog_interval = 30
 
+    # When True, the work_tick and cog_tick schedulers skip this building entirely.
+    # Override on specific agents that should not run continuously (e.g. btc_recovery).
+    paused = False
+
+    # --- Employee operating model ---
+    # What this building does as an employee, used for reporting + self-directed
+    # to-do lists. Override job_title/mission/routine_commands/employee_duty.
+    job_title = "Worker"
+    mission = ""
+    routine_commands = []  # list of (task_title, auto_command) self-assigned daily work
+
     def work(self):
         """Called every tick. Domain background work for this building.
         The autonomous reasoning loop is driven separately on the building's
         own chronoschedule via cognitive_tick()."""
         pass
+
+    def employee_duty(self):
+        """Proactive initiative this employee takes each shift (its own
+        everyday job), beyond any assigned goals/tasks. Override as needed."""
+        return None
+
+    def employee_shift(self):
+        """Run this building as an employee for one shift.
+
+        Executes the building's existing background work(), then hands off to
+        the employee loop which: ensures a self-directed to-do list, picks up
+        any assigned goals/tasks, runs the proactive employee_duty(), escalates
+        anything it can't safely decide, and files an end-of-shift report.
+        """
+        try:
+            self.work()
+        except Exception as exc:  # noqa: BLE001
+            self.trace("observe", "error", "↺", f"work(): {exc}")
+        from city.employee import run_employee_shift
+        return run_employee_shift(self)
 
     def cognitive_tick(self):
         """Drive this building's autonomous Cognitive Orchestrator once.
@@ -223,6 +259,19 @@ class Agent:
         """
         from city.db import log_trace
         log_trace(self.conn, self.name, tag, ctype, ctmsact, content, data)
+
+    @property
+    def status(self):
+        """Current status from the DB (idle / working / stopped / error)."""
+        try:
+            row = self.conn.execute(
+                "SELECT status FROM agents WHERE name = ?", (self.name,)
+            ).fetchone()
+            if row:
+                return row["status"]
+        except Exception:
+            pass
+        return "idle"
 
     def set_status(self, status):
         set_status(self.conn, self.name, status)

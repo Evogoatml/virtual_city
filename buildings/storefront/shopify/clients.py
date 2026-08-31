@@ -19,6 +19,7 @@ import hashlib
 import hmac
 import urllib.request
 import urllib.error
+import urllib.parse
 from typing import Any, Dict, Optional
 
 
@@ -34,13 +35,44 @@ class ShopifyClient:
     """Admin + Storefront GraphQL wrapper."""
 
     def __init__(self):
-        self.domain = _env("SHOPIFY_STORE_DOMAIN") or _env("SHOPIFY_SHOP_DOMAIN")
+        domain_raw = _env("SHOPIFY_STORE_DOMAIN") or _env("SHOPIFY_SHOP_DOMAIN")
+        # Strip protocol — the Shopify URL is built as https://{domain}/...
+        self.domain = domain_raw.replace("https://", "").replace("http://", "").strip("/")
         self.admin_token = _env("SHOPIFY_ADMIN_API_ACCESS_TOKEN") or _env("SHOPIFY_ACCESS_TOKEN")
+        self.client_id = _env("SHOPIFY_API_KEY") or _env("SHOPIFY_CLIENT_ID")
+        self.client_secret = _env("SHOPIFY_API_SECRET") or _env("SHOPIFY_CLIENT_SECRET")
         self.storefront_token = _env("SHOPIFY_STOREFRONT_API_TOKEN")
         self.version = _env("SHOPIFY_API_VERSION", "2026-01")
         self.webhook_secret = _env("SHOPIFY_WEBHOOK_SECRET")
         self.webhook_base_url = _env("SHOPIFY_WEBHOOK_BASE_URL")
-        self.ready = bool(self.domain and self.admin_token)
+        self._token_expires_at = 0.0
+        self.ready = bool(self.domain and (self.admin_token or (self.client_id and self.client_secret)))
+
+    def _refresh_token(self):
+        """Refresh the admin access token using client_credentials grant.
+
+        Used when the stored admin_token is expired/invalid. Falls back
+        silently — if refresh fails, the original error is surfaced to
+        the caller on the next GraphQL call.
+        """
+        if not (self.domain and self.client_id and self.client_secret):
+            return
+        url = f"https://{self.domain}/admin/oauth/access_token"
+        data = urllib.parse.urlencode({
+            "grant_type": "client_credentials",
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }).encode()
+        req = urllib.request.Request(url, data=data, method="POST")
+        req.add_header("Content-Type", "application/x-www-form-urlencoded")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read().decode())
+            if result.get("access_token"):
+                self.admin_token = result["access_token"]
+                self._token_expires_at = time.time() + result.get("expires_in", 86400) - 60
+        except Exception:
+            pass
 
     # --- low level ---
     def _graphql(self, endpoint: str, token: str, query: str, variables: Optional[dict] = None) -> dict:
@@ -59,6 +91,19 @@ class ShopifyClient:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode())
         except urllib.error.HTTPError as e:
+            # 401 → token may be expired; try refresh + retry once
+            if e.code == 401 and endpoint == "admin":
+                self._refresh_token()
+                if self.admin_token != token:
+                    req.add_header("X-Shopify-Access-Token", self.admin_token)
+                    try:
+                        with urllib.request.urlopen(req, timeout=30) as resp:
+                            data = json.loads(resp.read().decode())
+                    except urllib.error.HTTPError as e2:
+                        return {"errors": [{"message": f"HTTP {e2.code}: {e2.read().decode()[:300]}"}]}
+                    except Exception as e2:  # noqa: BLE001
+                        return {"errors": [{"message": str(e2)}]}
+                    return data
             return {"errors": [{"message": f"HTTP {e.code}: {e.read().decode()[:300]}"}]}
         except Exception as e:  # noqa: BLE001
             return {"errors": [{"message": str(e)}]}
@@ -85,20 +130,29 @@ class ShopifyClient:
     # --- webhook registration (Admin REST) ---
     def register_webhook(self, address: str, topic: str) -> dict:
         """Create a webhook subscription in Shopify pointing at `address`."""
-        if not self.domain or not self.admin_token:
-            return {"errors": [{"message": "Shopify credentials missing (domain/admin token)"}]}
+        if not self.domain:
+            return {"errors": [{"message": "Shopify domain missing"}]}
+        if not self.admin_token:
+            self._refresh_token()
+        if not self.admin_token:
+            return {"errors": [{"message": "Shopify admin token missing and refresh failed"}]}
         url = f"https://{self.domain}/admin/api/{self.version}/webhooks.json"
         payload = json.dumps({"webhook": {"topic": topic, "address": address, "format": "json"}}).encode()
-        req = urllib.request.Request(url, data=payload, method="POST")
-        req.add_header("Content-Type", "application/json")
-        req.add_header("X-Shopify-Access-Token", self.admin_token)
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode())
-        except urllib.error.HTTPError as e:
-            return {"errors": [{"message": f"HTTP {e.code}: {e.read().decode()[:300]}"}]}
-        except Exception as e:  # noqa: BLE001
-            return {"errors": [{"message": str(e)}]}
+        for attempt in range(2):
+            req = urllib.request.Request(url, data=payload, method="POST")
+            req.add_header("Content-Type", "application/json")
+            req.add_header("X-Shopify-Access-Token", self.admin_token)
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    return json.loads(resp.read().decode())
+            except urllib.error.HTTPError as e:
+                if e.code == 401 and attempt == 0:
+                    self._refresh_token()
+                    continue
+                return {"errors": [{"message": f"HTTP {e.code}: {e.read().decode()[:300]}"}]}
+            except Exception as e:  # noqa: BLE001
+                return {"errors": [{"message": str(e)}]}
+        return {"errors": [{"message": "webhook registration failed after retry"}]}
 
     # --- domain queries / mutations (spec queries) ---
     def get_orders(self, limit: int = 10) -> dict:
@@ -109,7 +163,7 @@ class ShopifyClient:
               node {
                 id name email
                 totalPriceSet { shopMoney { amount currencyCode } }
-                fulfillmentStatus financialStatus createdAt
+                displayFulfillmentStatus displayFinancialStatus createdAt
                 lineItems(first: 10) {
                   edges { node { title quantity variant { id sku inventoryQuantity } } }
                 }

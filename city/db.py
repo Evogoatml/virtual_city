@@ -209,7 +209,12 @@ def init_db():
         """
     )
     conn.commit()
-    conn.close()
+    # Do NOT close the thread-local connection — init_db may run on the main
+    # thread while scheduler threads share the same connection. Closing it
+    # here would cause "Cannot operate on a closed database" in background
+    # ticks. The connection is thread-local and intentionally never closed
+    # (see get_raw_connection).
+    return conn
 
 
 def now_iso():

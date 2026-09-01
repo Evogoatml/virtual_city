@@ -4,11 +4,25 @@
 __pycache__/
 *.pyc
 *.db
+# SQLite WAL/rollback sidecars — regenerated on every run, 4MB+ binary churn
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
 *.log
 *.pid
 node_modules/
 dist/
 .DS_Store
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Local scan/report artifacts (machine-specific output, not source)
+found_wallets_report.txt
+*_report.txt
 
 # Founder OS demo clone — kept ONLY as local visual reference, never committed
 os/

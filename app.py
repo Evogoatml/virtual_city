@@ -124,7 +124,7 @@ def work_tick():
             except Exception as exc:
                 print(f"[work_tick] {agent.name} error: {exc}")
     finally:
-        conn.close()
+        pass  # thread-local — never close (city.db)
 
 
 def scheduled_meeting():
@@ -140,7 +140,7 @@ def scheduled_meeting():
     except Exception as exc:
         print(f"[scheduled_meeting] error: {exc}")
     finally:
-        conn.close()
+        pass  # thread-local — never close (city.db)
 
 
 scheduler = BackgroundScheduler(daemon=True)
@@ -160,7 +160,7 @@ def cog_tick(name):
             agent.conn = conn
             agent.cognitive_tick()
     finally:
-        conn.close()
+        pass  # thread-local — never close (city.db)
 
 
 def cog_schedule_tick():
@@ -175,7 +175,7 @@ def cog_schedule_tick():
             except Exception:
                 pass
     finally:
-        conn.close()
+        pass  # thread-local — never close (city.db)
 
 
 for _name in list(get_registry(None).keys()):
@@ -208,7 +208,7 @@ def runtime_tick():
             except Exception as exc:
                 print(f"[runtime_tick] {agent.name} error: {exc}")
     finally:
-        conn.close()
+        pass  # thread-local — never close (city.db)
 
 
 @app.route("/api/agent/<name>/pause")
@@ -757,7 +757,7 @@ def api_stream():
                     yield ": keep-alive\n\n"
                 time.sleep(1)
         finally:
-            conn.close()
+            pass  # thread-local — never close
 
     return Response(gen(), mimetype="text/event-stream")
 

@@ -48,7 +48,12 @@ def get_raw_connection():
     else:
         try:
             conn.execute("SELECT 1")
-        except Exception:
+        except sqlite3.ProgrammingError:
+            # Connection was closed by a rogue callback — recreate it.
+            conn = _new_conn()
+            _local.conn = conn
+        except sqlite3.OperationalError:
+            # Database is locked or corrupted — recreate.
             conn = _new_conn()
             _local.conn = conn
     return conn

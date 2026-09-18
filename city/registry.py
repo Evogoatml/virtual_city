@@ -22,6 +22,7 @@ _SKIP_PREFIXES = (
     "buildings.btc_recovery.btc_python",
     "buildings.social_media.viral",
     "buildings.CEO.kernel",
+    "buildings.storefront.shopify.test_automate",
 )
 
 

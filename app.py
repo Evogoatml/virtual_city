@@ -37,6 +37,7 @@ _MUTATING_PREFIXES = (
     "/api/webcheck/",
     "/api/agent/",
     "/api/escalations/",
+    "/api/shopify/automate/",
 )
 
 

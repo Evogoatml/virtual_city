@@ -118,6 +118,56 @@ def webhook(topic):
     return jsonify({"ok": True, "accepted": topic})
 
 
+@shopify_bp.route("/automate/respond", methods=["GET", "POST"])
+def automate_respond():
+    """Respond playbook: answer a store question (read-only)."""
+    from buildings.storefront.shopify.automate import run_respond
+    from city.db import get_db
+    from city.registry import get_registry
+
+    data = request.get_json(force=True, silent=True) or {}
+    query = data.get("query") or request.args.get("query") or "status"
+    notify = bool(data.get("notify") or request.args.get("notify"))
+    conn = get_db()
+    agent = get_registry(conn).get("shopify")
+    if agent:
+        agent.conn = conn
+    report = run_respond(
+        query=query,
+        shopify=getattr(agent, "shopify", None) if agent else None,
+        department=agent,
+        notify=notify,
+    )
+    return jsonify(report)
+
+
+@shopify_bp.route("/automate/schedule", methods=["GET", "POST"])
+def automate_schedule():
+    """Schedule playbook: daily health, optional weekly sales block."""
+    from buildings.storefront.shopify.automate import run_schedule
+    from city.db import get_db
+    from city.registry import get_registry
+
+    data = request.get_json(force=True, silent=True) or {}
+    weekly = bool(data.get("weekly") or request.args.get("weekly"))
+    notify = True
+    if "notify" in data:
+        notify = bool(data.get("notify"))
+    elif request.args.get("notify") in ("0", "false", "no"):
+        notify = False
+    conn = get_db()
+    agent = get_registry(conn).get("shopify")
+    if agent:
+        agent.conn = conn
+    report = run_schedule(
+        weekly=weekly,
+        shopify=getattr(agent, "shopify", None) if agent else None,
+        department=agent,
+        notify=notify,
+    )
+    return jsonify(report)
+
+
 @shopify_bp.route("/register-webhooks", methods=["POST"])
 def register_webhooks():
     """Create Shopify webhook subscriptions via the Admin API.

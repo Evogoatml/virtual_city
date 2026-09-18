@@ -91,6 +91,8 @@ class ShopifyStoreDepartment(Department):
         self.rule(r"^rollback\s+(?P<action_id>\d+)$")(self._c_rollback)
         self.rule(r"^webhook\s+(?P<topic>\S+)$")(self._c_webhook_sim)
         self.rule(r"^status$")(self._c_status)
+        self.rule(r"^respond(?:\s+(?P<text>.+))?$")(self._c_respond)
+        self.rule(r"^schedule(?:\s+(?P<kind>daily|weekly))?$")(self._c_schedule)
 
     # ------------------------------------------------------------------
     # audit / guardrails
@@ -320,6 +322,27 @@ class ShopifyStoreDepartment(Department):
     def _c_status(self):
         return self.report()
 
+    def _c_respond(self, text=None):
+        from buildings.storefront.shopify.automate import run_respond
+
+        return run_respond(
+            query=text or "status",
+            shopify=self.shopify,
+            department=self,
+            notify=False,
+        )
+
+    def _c_schedule(self, kind=None):
+        from buildings.storefront.shopify.automate import run_schedule
+
+        weekly = (kind or "").lower() == "weekly"
+        return run_schedule(
+            weekly=weekly,
+            shopify=self.shopify,
+            department=self,
+            notify=True,
+        )
+
     # ------------------------------------------------------------------
     # chat / ReAct router
     # ------------------------------------------------------------------
@@ -427,20 +450,35 @@ class ShopifyStoreDepartment(Department):
     # scheduled workflows (called from app.py scheduler)
     # ------------------------------------------------------------------
     def daily_inventory_check(self):
-        res = self.execute_tool("get_low_stock", {"threshold": 5}, "scheduled daily inventory")
-        low = (res.get("result", {}) or {}).get("result") or res.get("result")
-        if isinstance(low, list) and low:
-            self.log("alert", f"{len(low)} products low on stock", {"low": low})
-        return res
+        from buildings.storefront.shopify.automate import run_schedule
+
+        report = run_schedule(
+            weekly=False,
+            shopify=self.shopify,
+            department=self,
+            notify=True,
+        )
+        inventory = (report.get("sections") or {}).get("inventory") or {}
+        items = inventory.get("items") or []
+        if items:
+            self.log("alert", f"{len(items)} products low on stock", {"low": items})
+        return report
 
     def weekly_report(self):
-        return self._c_analytics("weekly")
+        from buildings.storefront.shopify.automate import run_schedule
+
+        return run_schedule(
+            weekly=True,
+            shopify=self.shopify,
+            department=self,
+            notify=True,
+        )
 
     def process_abandoned_carts(self):
         """Run from work_tick: email recovery for checkouts >1h old, once."""
         cutoff = (datetime.now(timezone.utc).timestamp() - 3600)
         rows = self.conn.execute(
-            "SELECT checkout_id, email FROM shopify_checkouts WHERE recovered=0"
+            "SELECT checkout_id, email, created_at FROM shopify_checkouts WHERE recovered=0"
         ).fetchall()
         acted = 0
         for r in rows:

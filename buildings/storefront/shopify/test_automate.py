@@ -58,7 +58,7 @@ class HealthTests(unittest.TestCase):
         def fake_get(url):
             if url.endswith("/policies/shipping-policy"):
                 return {"ok": False, "url": url, "status": 404, "password": False}
-            if url.endswith("/"):
+            if url.rstrip("/").endswith("effataprints.myshopify.com"):
                 return _ok_page(url, password=True, ok=False)
             return _ok_page(url)
 
@@ -87,9 +87,10 @@ class PlaybookTests(unittest.TestCase):
         with patch.object(automate, "check_storefront_health", return_value={
             "ok": True, "checked": 2, "broken": [], "password_wall": False,
         }):
-            report = automate.run_respond("store health", shopify=shop, notify=False)
+            report = automate.run_respond("status", shopify=shop, notify=False)
         self.assertTrue(report["ok"])
         self.assertIn("health", report["intents"])
+        self.assertIn("inventory", report["intents"])
         self.assertTrue(report["sections"]["inventory"].get("skipped"))
         self.assertIn("Shopify respond", report["markdown"])
 

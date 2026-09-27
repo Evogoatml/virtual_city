@@ -29,3 +29,13 @@ os/
 
 # Agent-proposed brain notes awaiting human approval (not auto-committed)
 brain/vault/proposed/
+
+# Generated/index/build state and external optional checkouts
+.backend/
+*.tsbuildinfo
+.next/
+build/
+coverage/
+*.backup
+*.bak
+web-check

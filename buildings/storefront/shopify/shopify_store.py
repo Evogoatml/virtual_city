@@ -1,10 +1,10 @@
 """
 Shopify Store Department — Autonomous store agent for Effata Picks
-(Canvas Wall Art, print-on-demand via Printful).
+(print-on-demand apparel: t-shirts, performance tees, and crop tops; fulfillment is handled by NinjaPod).
 
 Adapted from the Agentic AI Full-Stack Build Spec into virtual_city's
 rule-based Department model:
-  - Real Shopify Admin/Storefront GraphQL + Printful REST (see clients.py)
+  - Real Shopify Admin/Storefront GraphQL (see clients.py)
   - Tool registry executed through an approval gate + audit log
   - Rollback data captured for destructive tools
   - ReAct-style `chat` command backed by city.venice
@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from city.department import Department
 from city.db import now_iso
 from city.api_budget import budget
-from buildings.storefront.shopify.clients import ShopifyClient, PrintfulClient
+from buildings.storefront.shopify.clients import ShopifyClient
 
 
 _AUTO_APPROVE = os.environ.get("SHOPIFY_AUTO_APPROVE", "").strip() in ("1", "true", "on")
@@ -70,7 +70,6 @@ class ShopifyStoreDepartment(Department):
         """)
         self.conn.commit()
         self.shopify = ShopifyClient()
-        self.printful = PrintfulClient()
 
     def register_rules(self):
         self.rule(r"^orders(?:\s+(?P<limit>\d+))?$")(self._c_orders)
@@ -80,10 +79,8 @@ class ShopifyStoreDepartment(Department):
         self.rule(r"^discount\s+(?P<code>\S+)\s+(?P<percentage>[\d.]+)(?:\s+(?P<expires>\S+))?$")(self._c_discount)
         self.rule(r"^inventory adjust\s+(?P<item_id>\S+)\s+(?P<loc_id>\S+)\s+(?P<delta>-?\d+)$")(self._c_inventory)
         self.rule(r"^metafield set\s+(?P<owner_id>\S+)\s+(?P<namespace>\S+)\s+(?P<key>\S+)\s+(?P<value>.+?)(?:\s+(?P<mtype>\w+))?$")(self._c_metafield)
-        self.rule(r"^submit printful\s+(?P<order_id>\S+)$")(self._c_submit_printful)
         self.rule(r"^describe product\s+(?P<title>.+?)(?:\s+(?P<tone>gallery|minimal|bold))?$")(self._c_describe)
         self.rule(r"^analytics(?:\s+(?P<kind>weekly|top))?$")(self._c_analytics)
-        self.rule(r"^sync printful$")(self._c_sync_printful)
         self.rule(r"^chat\s+(?P<text>.+)$")(self._c_chat)
         self.rule(r"^pending$")(self._c_pending)
         self.rule(r"^actions(?:\s+(?P<limit>\d+))?$")(self._c_actions)
@@ -137,8 +134,6 @@ class ShopifyStoreDepartment(Department):
                 data = self._api("shopify", f"inv:{args.get('inventoryItemId')}:{args.get('delta')}", lambda: self.shopify.adjust_inventory(**args))
             elif tool == "write_metafield":
                 data = self._api("shopify", f"mf:{args.get('ownerId')}:{args.get('key')}", lambda: self.shopify.write_metafield(**args))
-            elif tool == "submit_printful_order":
-                data = self._api("printful", f"order:{args.get('orderId')}", lambda: self._do_submit_printful(args["orderId"]))
             elif tool == "generate_product_description":
                 data = self._generate_description(args)
             else:
@@ -187,27 +182,16 @@ class ShopifyStoreDepartment(Department):
     # ------------------------------------------------------------------
     # tool implementations
     # ------------------------------------------------------------------
-    def _do_submit_printful(self, order_id):
-        order = self.shopify.admin(
-            "query($id: ID!) { order(id: $id) { id email subtotalPrice "
-            "shippingAddress { name address1 city provinceCode countryCode zip } "
-            "lineItems(first: 10) { edges { node { quantity variant { sku } } } } } }",
-            {"id": order_id},
-        )
-        node = order.get("data", {}).get("order")
-        if not node:
-            return {"error": "order not found", "detail": order}
-        return self.printful.submit_order(node)
-
     def _generate_description(self, args):
         from city.venice import json_chat
         title = args.get("productTitle", "")
         tone = args.get("tone", "gallery")
-        prompt = (f"Write an SEO-optimized Shopify product description for a canvas wall art "
-                  f"print titled '{title}'. Tone: {tone}. Include a short title tag, a 2-3 sentence "
-                  f"description, and 6 comma-separated SEO tags. Respond strictly as JSON with keys "
-                  f"descriptionHtml, tags (array).")
-        res = json_chat("You are an e-commerce copywriter for Effata Picks canvas wall art.", prompt)
+        prompt = (f"Write an SEO-optimized Shopify product description for a print-on-demand "
+                  f"apparel product titled '{title}'. The catalog includes t-shirts, performance tees, "
+                  f"and crop tops. Tone: {tone}. Include a short title tag, a 2-3 sentence description, "
+                  f"and 6 comma-separated SEO tags. Respond strictly as JSON with keys descriptionHtml, "
+                  f"tags (array).")
+        res = json_chat("You are an e-commerce copywriter for Effata Picks print-on-demand apparel.", prompt)
         if not res.get("ok"):
             return {"error": res.get("error", "venice call failed")}
         return {"description": res.get("parsed"), "raw": res.get("content")}
@@ -250,10 +234,6 @@ class ShopifyStoreDepartment(Department):
                                   "value": value, "type": mtype or "string"},
                                  "write metafield", requires_approval=False)
 
-    def _c_submit_printful(self, order_id):
-        return self.execute_tool("submit_printful_order", {"orderId": order_id},
-                                 "submit order to printful", requires_approval=False)
-
     def _c_describe(self, title, tone=None):
         return self.execute_tool("generate_product_description",
                                  {"productTitle": title, "tone": tone or "gallery"},
@@ -267,19 +247,6 @@ class ShopifyStoreDepartment(Department):
             q = ("FROM sales SHOW sum(net_sales) AS total_sales, count(orders) AS order_count "
                  "SINCE -7d UNTIL today ORDER BY total_sales DESC")
         return {"note": "ShopifyQL analytics", "query": q}
-
-    def _c_sync_printful(self):
-        if not self.printful.ready:
-            return {"ok": False, "error": "Printful not configured"}
-        return self.execute_tool_internal_printful()
-
-    def execute_tool_internal_printful(self):
-        ok, reason = budget.allow(self.name, "printful", key="store_products")
-        if not ok:
-            return {"ok": False, "error": reason}
-        data = self.printful.list_store_products()
-        budget.record(self.name, "printful", key="store_products", ok=True)
-        return {"ok": True, "result": data}
 
     def _c_chat(self, text):
         return self.chat(text)
@@ -352,11 +319,12 @@ class ShopifyStoreDepartment(Department):
         tools = [
             "get_orders(limit)", "get_products()", "get_low_stock(threshold)",
             "update_product(id, field, value)", "create_discount(code, pct)",
-            "adjust_inventory(item, loc, delta)", "submit_printful_order(orderId)",
+            "adjust_inventory(item, loc, delta)",
             "generate_product_description(title, tone)",
         ]
         system = (
-            "You are the store manager agent for Effata Picks (Shopify canvas wall art POD). "
+            "You are the store manager agent for Effata Picks (Shopify print-on-demand apparel: "
+            "t-shirts, performance tees, and crop tops; fulfillment is handled by NinjaPod). "
             "Given the owner's request, either (a) reply with a single JSON object "
             "{\"tool\": <name>, \"args\": {...}} to invoke a tool, or (b) reply with plain advice text. "
             "Destructive tools (create_discount, adjust_inventory) need approval. Tools: " + ", ".join(tools)
@@ -371,7 +339,7 @@ class ShopifyStoreDepartment(Department):
                 call = json.loads(content)
                 tool = call.get("tool")
                 known = {"get_orders", "get_products", "get_low_stock", "update_product",
-                         "create_discount", "adjust_inventory", "submit_printful_order",
+                         "create_discount", "adjust_inventory",
                          "generate_product_description"}
                 if tool in known:
                     req_appr = tool in ("create_discount", "adjust_inventory")
@@ -390,7 +358,7 @@ class ShopifyStoreDepartment(Department):
         self.trace("think", "plan", "♢", f"webhook {topic} received", {"topic": topic})
         if topic == "orders/create":
             node = body.get("data", {}).get("object", body)
-            # record locally + auto-submit to Printful
+            # Record the Shopify order locally; fulfillment is handled outside this app.
             try:
                 self.conn.execute(
                     "INSERT INTO shopify_orders (product, revenue, cost, source, placed_at) "
@@ -400,11 +368,7 @@ class ShopifyStoreDepartment(Department):
                 self.conn.commit()
             except Exception:
                 pass
-            oid = body.get("id") or (node.get("admin_graphql_api_id"))
-            if oid:
-                return self.execute_tool("submit_printful_order", {"orderId": oid},
-                                         "webhook orders/create", requires_approval=False)
-            return {"ok": True, "note": "order recorded, no id to submit"}
+            return {"ok": True, "note": "order recorded"}
         if topic == "products/create":
             node = body.get("data", {}).get("object", body)
             title = node.get("title", "Untitled")
@@ -519,7 +483,6 @@ class ShopifyStoreDepartment(Department):
             "department": self.name,
             "subject": self.subject,
             "shopify_connected": self.shopify.ready,
-            "printful_connected": self.printful.ready,
             "manual_orders_logged": row["n"],
             "revenue_usd": round(row["rev"], 2),
             "profit_usd": round(row["rev"] - row["cost"], 2),

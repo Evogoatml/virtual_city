@@ -11,12 +11,12 @@ export default function OverviewPage() {
         <div className="card">
           <div className="h">Store</div>
           <div style={{ fontSize: 18, fontWeight: 700 }}>effataprints</div>
-          <div style={{ color: "#7c8aa3", fontSize: 11 }}>Canvas wall art · POD</div>
+          <div style={{ color: "#7c8aa3", fontSize: 11 }}>Apparel · POD</div>
         </div>
         <div className="card">
           <div className="h">Fulfillment</div>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>Printful</div>
-          <div style={{ color: "#7c8aa3", fontSize: 11 }}>Auto-submit on order</div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>NinjaPod</div>
+          <div style={{ color: "#7c8aa3", fontSize: 11 }}>External fulfillment</div>
         </div>
         <div className="card">
           <div className="h">Guardrails</div>
@@ -36,8 +36,8 @@ export default function OverviewPage() {
       <div className="h">How it works</div>
       <div className="card" style={{ color: "#7c8aa3", fontSize: 12, lineHeight: 1.6 }}>
         Shopify webhooks (orders, products, inventory, checkouts) land at <code>/api/webhooks/*</code>,
-        are HMAC-verified, then drive Inngest workflows and the agent tool registry. New orders auto-submit
-        to Printful. High-stakes tools (discounts, email, inventory) require owner approval in the Approvals queue.
+        are HMAC-verified, then drive Inngest workflows and the agent tool registry. New orders emit an
+        event; fulfillment is handled externally. High-stakes tools (discounts, email, inventory) require owner approval in the Approvals queue.
       </div>
     </div>
   );

@@ -26,8 +26,8 @@ export const abandonedCartFlow = inngest.createFunction(
     if (!completed) {
       await step.run("send-recovery-email", async () => {
         return sendEmail(
-          "🛒 Still thinking it over? Your wall art is waiting",
-          "Hi! You left some beautiful canvas prints in your cart. Complete your order before they sell out."
+          "🛒 Still thinking it over? Your new apparel is waiting",
+          "Hi! You left some great apparel in your cart. Complete your order before it sells out."
         );
       });
     }

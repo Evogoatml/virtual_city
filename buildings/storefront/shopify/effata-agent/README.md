@@ -1,14 +1,14 @@
 # Effata Picks — Autonomous Shopify Store Agent
 
-AI agent that runs the Effata Picks canvas-wall-art (print-on-demand) Shopify store with
-minimal human intervention: order → Printful fulfillment, product content generation,
+AI agent that runs the Effata Picks print-on-demand apparel Shopify store with
+minimal human intervention: order tracking, external NinjaPod fulfillment, product content generation,
 low-stock alerts, abandoned-cart recovery, weekly reports, and a chat command interface.
 
 ## Stack
 - **Next.js 14 (App Router) + TypeScript + Tailwind** — dashboard + API routes
 - **Anthropic Claude** — reasoning / tool-use agent (chat + content gen)
 - **Shopify Admin GraphQL** — orders, products, inventory, discounts, metafields
-- **Printful API** — print-on-demand fulfillment
+- **NinjaPod** — external apparel fulfillment; this app does not call a NinjaPod API
 - **Supabase (Postgres + pgvector)** — audit log, memory, embeddings
 - **Upstash Redis** — rate limiting
 - **Inngest** — durable webhooks, cron workflows, retries
@@ -29,7 +29,7 @@ Topics handled: `orders/create`, `orders/fulfilled`, `orders/cancelled`,
 `checkouts/create`, `app/uninstalled`. All are HMAC-verified with `SHOPIFY_WEBHOOK_SECRET`.
 
 Priority workflows:
-1. `orders/create` → auto-submit to Printful
+1. `orders/create` → record the order; fulfillment is handled externally by NinjaPod
 2. `products/create` → generate SEO description (via chat tool)
 3. daily inventory check (Inngest cron) → low-stock alert
 4. abandoned cart (Inngest, 1h delay) → recovery email

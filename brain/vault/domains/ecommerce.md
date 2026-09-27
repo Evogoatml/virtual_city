@@ -8,8 +8,8 @@ priority: 2
 
 # Ecommerce Domain
 
-## Shopify (Effata Picks — Canvas Wall Art POD via Printful)
-- Store: effataprints.myshopify.com. Fulfillment through Printful (no inventory risk).
+## Shopify (Effata Picks — print-on-demand apparel)
+- Store: effataprints.myshopify.com. Catalog focus: t-shirts, performance tees, and crop tops. Fulfillment is handled by NinjaPod outside this application; no NinjaPod API integration is included.
 - Levers: traffic, conversion rate, AOV, margins. Watch fulfillment + shipping times.
 
 ## Product Flipping

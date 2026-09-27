@@ -14,14 +14,15 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 CITY_ROOT = Path(__file__).resolve().parents[2]
-# Prefer env override, then city symlink/folder, then home clone
-_env = os.environ.get("WEBCHECK_ROOT")
-if _env:
-    WEBCHECK_ROOT = Path(_env).expanduser().resolve()
-elif (CITY_ROOT / "web-check").exists():
-    WEBCHECK_ROOT = (CITY_ROOT / "web-check").resolve()
-else:
-    WEBCHECK_ROOT = (Path.home() / "web-check").resolve()
+# The optional web-check checkout is external to this repository. Configure it
+# explicitly with WEB_CHECK_PATH; the local path is only a convenience for an
+# existing untracked checkout and produces a clear error when absent.
+_configured_path = os.environ.get("WEB_CHECK_PATH") or os.environ.get("WEBCHECK_ROOT")
+WEBCHECK_ROOT = (
+    Path(_configured_path).expanduser().resolve()
+    if _configured_path
+    else CITY_ROOT / "web-check"
+)
 PID_FILE = CITY_ROOT / "data" / "webcheck.pid"
 LOG_FILE = CITY_ROOT / "data" / "webcheck.log"
 DEFAULT_PORT = int(os.environ.get("WEBCHECK_PORT", "3000"))
@@ -90,7 +91,8 @@ def is_up(port: int = DEFAULT_PORT, timeout: float = 2.0) -> bool:
 def status(port: int = DEFAULT_PORT) -> Dict[str, Any]:
     pid = read_pid()
     up = is_up(port)
-    return {
+    exists = WEBCHECK_ROOT.is_dir()
+    result = {
         "running": up,
         "pid": pid,
         "port": port,
@@ -102,6 +104,12 @@ def status(port: int = DEFAULT_PORT) -> Dict[str, Any]:
         "built": (WEBCHECK_ROOT / "dist" / "client").is_dir()
         or (WEBCHECK_ROOT / "dist").is_dir(),
     }
+    if not exists:
+        result["error"] = (
+            f"web-check path not found at {WEBCHECK_ROOT}; "
+            "set WEB_CHECK_PATH to an external checkout"
+        )
+    return result
 
 
 def ensure_installed() -> Dict[str, Any]:

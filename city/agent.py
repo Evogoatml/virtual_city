@@ -58,7 +58,7 @@ class Agent:
     cog_interval = 30
 
     # When True, the work_tick and cog_tick schedulers skip this building entirely.
-    # Override on specific agents that should not run continuously (e.g. btc_recovery).
+    # Override on specific agents that should not run continuously.
     paused = False
 
     # --- Employee operating model ---

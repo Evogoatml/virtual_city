@@ -39,7 +39,7 @@ BUILDINGS = {
     "treasury":           (4, 3),  # Stage 4 — real money only
 
     # Finance district (row 1)
-    "finance_building":   (0, 1),  # Orchestrator — crypto_trading + market_data + btc_recovery + finance_treasury
+    "finance_building":   (0, 1),  # Orchestrator — crypto_trading + market_data + finance_treasury
 
     # Media & Growth district (row 2)
     "media_building":     (3, 2),  # Orchestrator — social_affiliates is a department
@@ -57,7 +57,6 @@ DEPARTMENTS = {
     "shopify":             "storefront",
     "crypto_trading":      "finance_building",
     "market_data":         "finance_building",
-    "btc_recovery":        "finance_building",
     "finance_treasury":    "finance_building",
     "social_affiliates":   "media_building",
     "sourcing_research":   "research_building",

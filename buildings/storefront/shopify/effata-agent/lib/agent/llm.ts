@@ -33,7 +33,7 @@ export async function generateProductDescription(
   imageUrl?: string,
   tone: string = "gallery"
 ): Promise<string> {
-  const prompt = `Write an SEO-optimized product description for a canvas wall art print.
+  const prompt = `Write an SEO-optimized product description for a print-on-demand apparel product (t-shirt, performance tee, or crop top).
 Title: ${title}
 Tone: ${tone}
 ${imageUrl ? `Reference image: ${imageUrl}` : ""}

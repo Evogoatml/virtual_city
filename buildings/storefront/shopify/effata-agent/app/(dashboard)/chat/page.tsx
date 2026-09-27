@@ -54,7 +54,7 @@ export default function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
-            placeholder="e.g. Generate a description for my new mountain canvas"
+            placeholder="e.g. Generate a description for my new performance tee"
             style={{
               flex: 1,
               background: "#161b29",

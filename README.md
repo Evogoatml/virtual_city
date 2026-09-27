@@ -26,8 +26,9 @@ Environment variables read by the active Flask/Python code include:
 - LLM providers: `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`,
   `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `DEEPSEEK_API_KEY`,
   `VENICE_API_KEY`, `VENICE_BASE_URL`, `VENICE_MODEL`, and `OPENAI_API_KEY`.
-- Commerce/integrations: Shopify, Printful, Venice, Resend, and Slack variables
-  documented in `.env.example`; values are read with `os.environ`/`os.getenv`.
+- Commerce/integrations: Shopify, Venice, Resend, and Slack variables documented in
+  `.env.example`; Effata Picks sells print-on-demand apparel fulfilled externally by NinjaPod.
+  No NinjaPod API integration is included; values are read with `os.environ`/`os.getenv`.
 - Optional web-check service: `WEB_CHECK_PATH`, `WEBCHECK_PORT`, and
   `WEBCHECK_HOST`. The checkout is external and is not committed to this repo.
 

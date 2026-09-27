@@ -1,5 +1,5 @@
 """
-Shopify + Printful HTTP clients for the shopify building.
+Shopify HTTP client for the shopify building.
 
 Synchronous (urllib) so they drop into Flask request handling and the
 30s work_tick without async plumbing. All credentials come from the env.
@@ -7,7 +7,6 @@ Synchronous (urllib) so they drop into Flask request handling and the
 Auth:
   Shopify Admin GraphQL  -> X-Shopify-Access-Token
   Shopify Storefront API -> X-Shopify-Storefront-Access-Token
-  Printful REST          -> Authorization: Bearer
 """
 from __future__ import annotations
 
@@ -267,58 +266,3 @@ class ShopifyClient:
                     out.append({"product": node["title"], "sku": v["node"].get("sku"),
                                 "variant_id": v["node"]["id"], "inventory": inv})
         return out
-
-
-class PrintfulClient:
-    """Printful REST wrapper (bearer token)."""
-
-    BASE = "https://api.printful.com"
-
-    def __init__(self):
-        self.api_key = _env("PRINTFUL_API_KEY")
-        self.store_id = _env("PRINTFUL_STORE_ID")
-        self.ready = bool(self.api_key)
-
-    def _request(self, method: str, path: str, payload: Optional[dict] = None) -> dict:
-        if not self.api_key:
-            return {"error": "Printful API key missing"}
-        url = f"{self.BASE}{path}"
-        data = json.dumps(payload).encode() if payload is not None else None
-        req = urllib.request.Request(url, data=data, method=method)
-        req.add_header("Content-Type", "application/json")
-        req.add_header("Authorization", f"Bearer {self.api_key}")
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode())
-        except urllib.error.HTTPError as e:
-            return {"error": f"HTTP {e.code}: {e.read().decode()[:300]}"}
-        except Exception as e:  # noqa: BLE001
-            return {"error": str(e)}
-
-    def list_store_products(self) -> dict:
-        return self._request("GET", "/store/products")
-
-    def list_catalog(self) -> dict:
-        return self._request("GET", "/products")
-
-    def submit_order(self, shopify_order: dict) -> dict:
-        recipient = shopify_order.get("shippingAddress", {})
-        payload = {
-            "recipient": {
-                "name": recipient.get("name", ""),
-                "address1": recipient.get("address1", ""),
-                "city": recipient.get("city", ""),
-                "state_code": recipient.get("provinceCode", ""),
-                "country_code": recipient.get("countryCode", ""),
-                "zip": recipient.get("zip", ""),
-            },
-            "items": [
-                {"sync_variant_id": li.get("variant", {}).get("sku"), "quantity": li.get("quantity")}
-                for li in shopify_order.get("lineItems", [])
-            ],
-            "retail_costs": {
-                "currency": "USD",
-                "subtotal": shopify_order.get("subtotalPrice", "0"),
-            },
-        }
-        return self._request("POST", "/orders", payload)

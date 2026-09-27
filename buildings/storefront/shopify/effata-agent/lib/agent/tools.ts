@@ -1,5 +1,4 @@
 import { getRecentOrders, getLowStockProducts, updateProduct, runShopifyQL } from "../shopify/queries";
-import { submitOrderToPrintful, PrintfulLineItem, PrintfulRecipient } from "../printful/client";
 import { generateProductDescription, summarize } from "./llm";
 import { getResend } from "../email";
 
@@ -82,34 +81,6 @@ export const tools: AgentTool[] = [
     execute: async (args) =>
       runShopifyQL(`mutation { inventoryAdjustQuantity(input: { inventoryItemId: "${args.inventoryItemId}", locationId: "${args.locationId}", availableDelta: ${args.delta} }) { inventoryLevel { available } userErrors { field message } } }`),
     requiresApproval: true,
-  },
-  {
-    name: "submit_printful_order",
-    description: "Submit a Shopify order to Printful for fulfillment",
-    parameters: { type: "object", properties: { shopifyOrderId: { type: "string" } }, required: ["shopifyOrderId"] },
-    execute: async ({ shopifyOrderId }) => {
-      const orders = await getRecentOrders(50);
-      const order = orders.find((o) => o.id === shopifyOrderId);
-      if (!order) throw new Error("order not found");
-      const recipient: PrintfulRecipient = {
-        name: order.name,
-        address1: "auto",
-        city: "auto",
-        state_code: "CA",
-        country_code: "US",
-        zip: "00000",
-      };
-      const items: PrintfulLineItem[] = order.lineItems.edges.map((e) => ({
-        sync_variant_id: e.node.variant.sku,
-        quantity: e.node.quantity,
-      }));
-      return submitOrderToPrintful({
-        recipient,
-        items,
-        retail_costs: { currency: "USD", subtotal: order.totalPriceSet.shopMoney.amount },
-      });
-    },
-    requiresApproval: false,
   },
   {
     name: "generate_product_description",

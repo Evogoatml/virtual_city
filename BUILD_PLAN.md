@@ -54,7 +54,7 @@ Every building MUST follow this shape. Two crashes (a segfault recursion and a
    as a peer building.
 
 2. **A building handles its own domain natively.** Shopify handles Shopify (webhooks,
-   store queries, Printful). Finance handles money. It does NOT embed another
+   store queries and catalog operations). Finance handles money. It does NOT embed another
    building's logic.
 
 3. **Cross-domain needs go through the bus or the registry — never by reaching into

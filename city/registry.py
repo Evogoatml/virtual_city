@@ -14,6 +14,20 @@ log = logging.getLogger("city.registry")
 
 _INSTANCES = {}
 
+# Vendored / standalone trees — not city Agent modules. Skip so boot stays
+# fast and discovery failures stay visible for real buildings.
+_SKIP_PREFIXES = (
+    "buildings.btc_recovery.btcrecover",
+    "buildings.btc_recovery.btc-python",
+    "buildings.btc_recovery.btc_python",
+    "buildings.social_media.viral",
+    "buildings.CEO.kernel",
+    "buildings.storefront.shopify.test_automate",
+)
+
+
+def _should_skip(module_name: str) -> bool:
+    return any(module_name == p or module_name.startswith(p + ".") for p in _SKIP_PREFIXES)
 def discover_and_build(conn):
     """Import every module in the buildings package tree, instantiate any Agent
     subclasses found, and return {name: instance}."""
@@ -26,6 +40,8 @@ def discover_and_build(conn):
     for importer, module_name, is_pkg in pkgutil.walk_packages(
         buildings_pkg.__path__, prefix="buildings.", onerror=lambda x: None
     ):
+        if _should_skip(module_name):
+            continue
         try:
             module = importlib.import_module(module_name)
         except Exception as exc:

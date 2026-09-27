@@ -81,7 +81,7 @@ def bootstrap():
     # --- CONTROL PANEL WIRE ---
     # Controll Panel listens to every building — it's the command center.
     for pub in ("supply_scout", "product_studio", "storefront", "treasury",
-                "crypto_trading", "market_data", "btc_recovery", "finance_building",
+                "crypto_trading", "market_data", "finance_building",
                 "social_affiliates", "media_building", "sourcing_research", "scraper",
                 "signal", "web_check", "shopify", "city_hall"):
         EventBus.subscribe("controll_panel", pub, "*")
@@ -402,24 +402,6 @@ def api_building_dashboard(name):
         except Exception:
             payload["positions"] = []
 
-    elif name == "btc_recovery":
-        try:
-            payload["address_count"] = agent.conn.execute(
-                "SELECT COUNT(*) AS c FROM btc_addresses"
-            ).fetchone()["c"]
-            payload["key_count"] = agent.conn.execute(
-                "SELECT COUNT(*) AS c FROM btc_private_keys"
-            ).fetchone()["c"]
-            payload["utxo_count"] = agent.conn.execute(
-                "SELECT COUNT(*) AS c FROM btc_utxos WHERE spent_at IS NULL"
-            ).fetchone()["c"]
-            addrs = agent.conn.execute(
-                "SELECT address, value_sat, confirmations FROM btc_utxos WHERE spent_at IS NULL ORDER BY value_sat DESC LIMIT 20"
-            ).fetchall()
-            payload["top_utxos"] = [dict(r) for r in addrs]
-        except Exception:
-            payload["top_utxos"] = []
-
     elif name == "product_flipping":
         try:
             items = agent.conn.execute(
@@ -528,7 +510,7 @@ def api_building_dashboard(name):
 
     elif name == "finance_building":
         try:
-            for dept in ["crypto_trading", "market_data", "btc_recovery", "finance_treasury"]:
+            for dept in ["crypto_trading", "market_data", "finance_treasury"]:
                 d = registry.get(dept)
                 if d and hasattr(d, "report"):
                     payload[dept] = d.report()

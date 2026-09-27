@@ -1,7 +1,7 @@
 ---
 title: Crypto Domain Knowledge
 tags: [domain, crypto]
-buildings: [crypto_trading, market_data, btc_recovery]
+buildings: [crypto_trading, market_data]
 personas: [crypto_operator, full_multistream]
 priority: 2
 ---
@@ -14,7 +14,3 @@ priority: 2
 
 ## Market Data
 - Snapshot prices on a cadence; fuel trading + treasury decisions.
-
-## BTC Recovery
-- Recover value from owned/partially-owned addresses and UTXOs. High-sensitivity:
-  never expose private keys in logs or the Brain.

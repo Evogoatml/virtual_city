@@ -25,7 +25,6 @@ from __future__ import annotations
 MONEY_AGENTS = frozenset({
     "shopify",
     "crypto_trading",
-    "btc_recovery",
     "finance_treasury",
     "finance_building",
     "product_flipping",

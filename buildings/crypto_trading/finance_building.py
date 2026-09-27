@@ -11,7 +11,7 @@ class FinanceBuildingAgent(Agent):
     district = "Financial District"
     color = "#ff6d00"
 
-    DEPT_NAMES = ("crypto_trading", "market_data", "btc_recovery", "finance_treasury")
+    DEPT_NAMES = ("crypto_trading", "market_data", "finance_treasury")
 
     def setup_schema(self):
         self.conn.execute("""

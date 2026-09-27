@@ -1,34 +1,82 @@
 # Virtual City
 
-Virtual City is a Flask-based application that presents business functions as buildings in a living city map. Each building represents an agent or service that contributes to the operation of the system, from research and sourcing to commerce, finance, and media.
+Virtual City is a Flask application that presents business agents as buildings. The
+server owns the city state, agent registry, SQLite persistence, scheduled work, and
+JSON/SSE APIs. The browser UI is server-rendered HTML plus static JavaScript; there
+is no root Vite/React build.
 
-The project is designed around a city metaphor: departments act as specialized parts of larger buildings, and activity flows through the city as tasks are approved, processed, and reported. City state is available in real time through the browser, giving the system an interactive control-room feel.
+## Setup
 
-## What the project focuses on
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env       # fill only the providers/integrations you use
+python3 app.py
+```
 
-- Organizing business processes as agents and buildings
-- Connecting workflows through event-driven handoffs
-- Tracking activity and results across the city
-- Providing a browser interface for monitoring and interaction
-- Supporting a command-line workflow for day-to-day operations
+The server listens on `CITY_HOST` (default `0.0.0.0`) and `CITY_PORT` or `PORT`
+(default `5000`). It creates runtime SQLite state under `data/`, which is ignored
+by Git. Do not put real credentials in tracked files.
 
-## Main areas of the city
+Environment variables read by the active Flask/Python code include:
 
-- **Command District** — coordinates the overall system and daily operations
-- **Research & Supply** — discovers opportunities and gathers information
-- **Studio District** — turns approved ideas into listings and drafts
-- **Commerce District** — handles sales, fulfillment, and revenue tracking
-- **Finance District** — manages market data, trading, and ledger activity
-- **Media District** — supports campaigns and growth activities
+- Runtime/server: `CITY_HOST`, `CITY_PORT`, `PORT`, `CITY_API_KEY`,
+  `CITY_API_BUDGET`, `COGNITION_ENABLED`, and `LLM_MOCK`.
+- LLM providers: `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`,
+  `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `DEEPSEEK_API_KEY`,
+  `VENICE_API_KEY`, `VENICE_BASE_URL`, `VENICE_MODEL`, and `OPENAI_API_KEY`.
+- Commerce/integrations: Shopify, Printful, Venice, Resend, and Slack variables
+  documented in `.env.example`; values are read with `os.environ`/`os.getenv`.
+- Optional web-check service: `WEB_CHECK_PATH`, `WEBCHECK_PORT`, and
+  `WEBCHECK_HOST`. The checkout is external and is not committed to this repo.
 
-## How it works
+## Routes
 
-The application combines a city dashboard, event-based communication, and agent-driven commands. Buildings can report on their status, respond to instructions, and participate in larger workflows that move work from discovery to execution.
+- `/` — 3D city home page.
+- `/operator` — operator dashboard.
+- `/manager` — manager dashboard.
+- `/health` — health response.
+- `/api/city`, `/api/stream`, `/api/agents`, `/api/manager` — city state and live status.
+- `/api/agent/<name>`, `/api/agent/<name>/run`, `/api/agent/<name>/runs` — agent details and runtime.
+- `/api/building/<name>/dashboard` — building dashboard payload.
+- `/api/brain`, `/api/persona`, `/api/budget`, `/api/escalations` — supporting state APIs.
+- `/room/webcheck/` and `/api/webcheck/*` — optional external web-check proxy/control.
 
-## Interface
+Mutating API routes may require `X-City-Api-Key` when `CITY_API_KEY` is set.
 
-The web interface lets users explore buildings, view live status, inspect internal dashboards, and interact with each agent. The project also includes a command-line wrapper for status checks, direct queries, meetings, reports, and other operational tasks.
+## CLI
 
-## Purpose
+The CLI bootstraps the same Flask application and registry:
 
-This repository serves as a structured operational environment for experimenting with autonomous business workflows, live system monitoring, and modular agent design inside a single interactive application.
+```bash
+./scripts/city status
+./scripts/city query <agent> "status"
+./scripts/city run <agent>
+./scripts/city meeting
+./scripts/city assign <agent> "task title"
+./scripts/city shift <agent>
+./scripts/city report <agent>
+./scripts/city brain
+./scripts/city persona [name]
+./scripts/city events [agent] [n]
+./scripts/city ledger
+./scripts/city budget
+```
+
+`python3 scripts/cityctl.py` is the underlying entry point. `scripts/start_webcheck.sh`
+is an optional helper for an externally installed web-check checkout.
+
+## Repository layout
+
+- `app.py`, `city/`, and `buildings/` — Flask entry point, core runtime, and agents.
+- `templates/` and `static/` — active Flask/Jinja pages and browser assets.
+- `buildings/storefront/shopify/effata-agent/` — separate nested Next.js/React/TypeScript app.
+- `buildings/storefront/shopify/effata-agent/help-agent/` — separate Node/Slack app.
+- `brain/` — checked-in knowledge notes used by the runtime.
+- `requirements.txt` — Python dependencies; nested Node apps have their own lockfiles.
+- `archive/` — superseded code retained for reference and not imported or served.
+
+The nested Node apps are intentionally left in place and are not part of the root
+Flask build. Generated state, local checkouts, dependency directories, and build
+outputs are ignored; recreate them from source/configuration when needed.

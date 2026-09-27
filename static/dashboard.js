@@ -35,58 +35,6 @@ DASHBOARDS._default = function (d) {
   return h;
 };
 
-// ── BTC Recovery ────────────────────────────────────────────────────
-DASHBOARDS.btc_recovery = function dashBTC(d) {
-  const rp = d.report || {};
-  const confirmed = rp.btc_confirmed || 0;
-  const mempool = rp.btc_mempool || 0;
-  const total = rp.btc_total || 0;
-  const utxos = d.utxo_count || rp.utxos || 0;
-  const addrs = d.address_count || rp.addresses || 0;
-  const keys = d.key_count || rp.keys || 0;
-  const top = d.top_utxos || [];
-
-  let h = '<div class="dash">';
-
-  // Stats row
-  h += '<div class="dash-row">';
-  h += card('Total BTC', fmtBtc(total), confirmed > 0 ? 'green' : '');
-  h += card('Confirmed', fmtBtc(confirmed), confirmed > 0 ? 'green' : '');
-  h += card('Mempool', fmtBtc(mempool), mempool > 0 ? 'yellow' : '');
-  h += '</div>';
-
-  h += '<div class="dash-row">';
-  h += card('UTXOs', String(utxos), '');
-  h += card('Addresses', String(addrs), '');
-  h += card('Private Keys', String(keys), keys > 0 ? 'gold' : '');
-  h += '</div>';
-  const kit = rp.recovery_kit || {};
-  if (kit.scripts || kit.total_mb) {
-    h += '<div class="dash-row">';
-    h += card('Scripts', String(kit.scripts || 0), 'gold');
-    h += card('btcrecover files', String(kit.btcrecover_files || 0), '');
-    h += card('Kit size', (kit.total_mb || 0) + ' MB', '');
-    h += '</div>';
-  }
-
-  // Top UTXOs table
-  if (top.length) {
-    h += '<div class="dash-card"><h4>Top UTXOs</h4><div class="dash-table-wrap">';
-    h += '<table class="dash-table"><thead><tr><th>Address</th><th>Value (BTC)</th><th>Conf</th></tr></thead><tbody>';
-    for (const u of top) {
-      const btc = (u.value_sat || 0) / 1e8;
-      h += '<tr><td class="mono">' + esc(u.address) + '</td><td>' + btc.toFixed(8) + '</td><td>' + (u.confirmations || 0) + '</td></tr>';
-    }
-    h += '</tbody></table></div></div>';
-  }
-
-  // Recent events
-  h += dashEvents(d);
-
-  h += '</div>';
-  return h;
-};
-
 // ── Crypto Trading ──────────────────────────────────────────────────
 DASHBOARDS.crypto_trading = function dashCrypto(d) {
   const rp = d.report || {};
@@ -365,15 +313,12 @@ DASHBOARDS.finance_building = function dashFinanceHub(d) {
   h += '<div class="dash-row">';
   const ct = d.crypto_trading || {};
   const md = d.market_data || {};
-  const bt = d.btc_recovery || {};
   const ft = d.finance_treasury || {};
   h += card('Crypto PnL', '$' + fmtNum(ct.pnl || 0), (ct.pnl || 0) >= 0 ? 'green' : 'red');
   h += card('Market Pairs', String(md.monitored_pairs || 0), '');
   h += card('Treasury', '$' + fmtNum(ft.grand_total_usd || 0), 'gold');
   h += '</div>';
   h += '<div class="dash-row">';
-  h += card('BTC Addrs', String(bt.addresses || 0), '');
-  h += card('BTC Balance', fmtBtc(bt.btc_confirmed || 0), bt.btc_confirmed > 0 ? 'green' : '');
   h += card('Open Pos', String(ct.open_positions || 0), (ct.open_positions || 0) > 0 ? 'yellow' : '');
   h += '</div>';
   h += dashEvents(d);
@@ -561,11 +506,7 @@ function fmtNum(n) {
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmtBtc(sat) {
-  if (!sat || sat === 0) return '0';
-  const btc = sat / 1e8;
-  return btc.toFixed(8) + ' ₿';
-}
+
 
 
 // ── Web Check room ──────────────────────────────────────────────────

@@ -64,7 +64,7 @@ DIMS = ["risk", "revenue", "efficiency", "growth", "stability",
         "opportunity", "capital", "velocity", "resilience", "leverage"]
 
 SIBLINGS = ["finance_building", "media_building", "research_building",
-            "crypto_trading", "market_data", "btc_recovery",
+            "crypto_trading", "market_data",
             "shopify", "product_flipping", "social_affiliates",
             "content_creation", "sourcing_research", "scraper", "signal"]
 

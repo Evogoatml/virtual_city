@@ -143,7 +143,7 @@ A persona = a named operating mode that **enables a subset of buildings** and se
 **north-star metrics**. Stored as markdown in `brain/vault/personas/` (or `personas` table).
 
 - Examples: `ecom_operator` (Shopify, Product Flipping, Affiliates, Content, Finance),
-  `crypto_operator` (Crypto Trading, Market Data, BTC Recovery, Finance),
+  `crypto_operator` (Crypto Trading, Market Data, Finance),
   `full_multistream` (everything on).
 - Loading a persona: sets active buildings, injects north-star into Brain context,
   and City Hall rolls up only active buildings against those metrics.

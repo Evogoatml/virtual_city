@@ -28,8 +28,6 @@ _SKIP_PREFIXES = (
 
 def _should_skip(module_name: str) -> bool:
     return any(module_name == p or module_name.startswith(p + ".") for p in _SKIP_PREFIXES)
-
-
 def discover_and_build(conn):
     """Import every module in the buildings package tree, instantiate any Agent
     subclasses found, and return {name: instance}."""
